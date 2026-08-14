@@ -1,0 +1,10 @@
+{
+  "steps": [
+    { "op": "initialize" },
+    { "op": "newSession" },
+    {
+      "op": "prompt",
+      "text": "Create a notebook at analysis.ipynb, set the first code cell source to print('NOTEBOOK_OK'), attempt to execute it, and reply ENVIRONMENT_REQUIRED if no environment is selected."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/notebook-environment/tsconfig.types.json" },
+    { "path": "./packages/notebook-core/tsconfig.types.json" },
+    { "path": "./packages/client-ui-notebook" }
+  ]
+}

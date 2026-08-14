@@ -1,0 +1,43 @@
+- text: Current notebook
+- combobox "Current notebook":
+  - option "analysis.ipynb" [selected]
+- status: 1 new documents
+- button "Open or create" [expanded]:
+  - img
+  - text: Open or create
+- button "Close Notebook panel":
+  - img
+- region "No notebook yet":
+  - heading "No notebook yet" [level=2]
+  - paragraph: Open an analysis document to log cells in this session. Running a cell injects its output for the model.
+  - button "Refresh":
+    - img
+    - text: Refresh
+  - button "Done"
+  - text: New notebook path
+  - textbox "New notebook path": notebook.ipynb
+  - text: Creates only an absent .ipynb file and never overwrites an existing file.
+  - button "Create notebook":
+    - img
+    - text: Create notebook
+  - group: Open an existing file by path
+- region "analysis.ipynb":
+  - text: analysis.ipynb
+  - toolbar "Notebook":
+    - status: "python3 #1 Kernel stopped"
+    - button "Run all"
+    - button "Reload from disk"
+    - button "Restart kernel"
+  - button "Code"
+  - button "Markdown"
+  - button "Raw"
+  - button "Run":
+    - img
+  - textbox "Cell source": print("browser notebook")
+  - text: browser notebook
+  - img "application/vnd.plotly.v1+json": 4 0
+  - status: Run succeeded
+  - button "Code"
+  - button "Markdown"
+  - button "Raw"
+  - button "Start coding"

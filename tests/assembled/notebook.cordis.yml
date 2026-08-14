@@ -1,0 +1,24 @@
+# Notebook coauthor overlay: model tools, memory kernel, durable attachments,
+# and an isolated real local filesystem with content-derived snapshot versions.
+- id: base
+  name: '@deepseek-ai/cordis-plugin-include'
+  config:
+    path: ./cordis.yml
+    patches:
+      - insert:
+          - id: attachment-local
+            name: '@deepseek-ai/dsh-attachment-local'
+          - id: notebook-snapshot
+            name: cordis:group
+            group: true
+            isolate:
+              fs: true
+            config:
+              - id: notebook-snapshot-fs
+                name: './tests/fixtures/notebook-snapshot-fs.ts'
+              - id: notebook
+                name: '@deepseek-ai/dsh-notebook'
+              - id: tool-notebook
+                name: '@deepseek-ai/dsh-tool-notebook'
+              - id: notebook-memory-backend
+                name: './tests/fixtures/notebook-memory-backend.ts'

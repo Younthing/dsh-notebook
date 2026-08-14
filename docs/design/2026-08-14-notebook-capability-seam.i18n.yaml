@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run docs:pair -- docs/design/2026-08-14-notebook-capability-seam.md
+2026-08-14-notebook-capability-seam.md: 89a55ffc7bad0eae51d9809841ff1113dc888443
+2026-08-14-notebook-capability-seam.zh.md: fae6c2120ddb66ea8f01fe78d9bd4a65cce813ef

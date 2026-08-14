@@ -1,0 +1,19 @@
+# Install the standalone Notebook capability into any DeepSeek Harness profile.
+- insert:
+    - id: notebook-core
+      name: '@deepseek-ai/dsh-notebook-core'
+
+    - id: notebook-environment-uv
+      name: '@deepseek-ai/dsh-notebook-environment-uv'
+
+    - id: notebook-kernel-jupyter
+      name: '@deepseek-ai/dsh-notebook-kernel-jupyter'
+
+    - id: notebook-remote
+      name: '@deepseek-ai/dsh-notebook-remote'
+
+    - id: tool-notebook
+      name: '@deepseek-ai/dsh-tool-notebook'
+
+    - id: ui-notebook
+      name: '@deepseek-ai/dsh-client-ui-notebook'

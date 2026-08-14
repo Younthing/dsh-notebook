@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/notebook-environment" },
+    { "path": "./packages/notebook-environment-uv" },
+    { "path": "./packages/notebook" },
+    { "path": "./packages/notebook-core" },
+    { "path": "./packages/notebook-remote" },
+    { "path": "./packages/notebook-kernel-jupyter" },
+    { "path": "./packages/tool-notebook" }
+  ]
+}
