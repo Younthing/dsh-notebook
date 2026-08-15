@@ -1,21 +1,21 @@
 /**
  * Model-facing notebook document tools and user-execution helper. Environment
  * installation and selection remain explicit UI operations.
- * @module @deepseek-ai/dsh-tool-notebook
+ * @module @younthing/dsh-tool-notebook
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { CellId, NotebookError, NotebookId } from '@deepseek-ai/dsh-notebook-core'
-import type { NotebookExecuteResult } from '@deepseek-ai/dsh-notebook-core'
+import { CellId, NotebookError, NotebookId } from '@younthing/dsh-notebook-core'
+import type { NotebookExecuteResult } from '@younthing/dsh-notebook-core'
 import type {
   NotebookJsonObject,
   NotebookJsonValue,
   NotebookMimeBundle,
   NotebookMimeValue,
   NotebookOutput,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { InferValue, ToolRunContext, ValueSchemaSpec } from '@deepseek-ai/dsh-tools'
@@ -366,7 +366,7 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   ctx.tools.register(defineTool({
     name: 'notebook_read',
-    description: 'Read one session-local notebook document reconstructed from the session log.',
+    description: 'Read one notebook document opened in the current plugin process.',
     parameters: {
       notebookId: { type: 'string', required: true, description: 'Notebook id returned by notebook_open or notebook_create.' },
     },

@@ -1,6 +1,6 @@
 /**
- * Workspace-backed notebook documents with session-logged state and replaceable kernels.
- * @module @deepseek-ai/dsh-notebook-core
+ * Workspace-backed notebook documents with process-local state and replaceable kernels.
+ * @module @younthing/dsh-notebook-core
  */
 
 import { Buffer } from 'node:buffer'
@@ -8,7 +8,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-attachment'
 import type { FsTarget, FsVersion } from '@deepseek-ai/dsh-fs'
-import type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+import type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 import type { SandboxExecutionPolicy } from '@deepseek-ai/dsh-sandbox'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import { isJsonValue } from '@deepseek-ai/dsh-session'
@@ -162,6 +162,7 @@ const MAX_DISCOVERY_ENTRIES = 500
 const MAX_DISCOVERY_DEPTH = 12
 const MIN_RESULT_BYTES = 1024
 const CANDIDATE_FILE_VERSION = NotebookFileVersion('candidate-file-version')
+const PROCESS_NOTEBOOK_EVENTS = new WeakMap<Session, SessionEvent[]>()
 
 /** Notebook workspace, kernel lifecycle, and result-limit configuration. */
 export interface Config {
@@ -239,6 +240,8 @@ interface BackendRegistration {
 
 interface SessionRuntime {
   readonly session: Session
+  /** rc.6-compatible process-local projection; `.ipynb` files remain durable truth. */
+  readonly events: SessionEvent[]
   readonly controller: AbortController
   readonly kernels: Map<NotebookId, KernelRecord>
   readonly pendingStarts: Set<PendingStart>
@@ -498,7 +501,7 @@ export class NotebookService extends Service {
   }
 
   /**
-   * Read one notebook document from the session log.
+   * Read one notebook document opened in this process.
    * @param session - owning session.
    * @param notebookId - target notebook identity.
    * @returns the folded notebook document.
@@ -508,7 +511,7 @@ export class NotebookService extends Service {
   }
 
   /**
-   * List notebook documents visible in one session log.
+   * List notebook documents opened in this process for one session.
    * @param session - owning session.
    * @returns documents in first-open order.
    */
@@ -1908,6 +1911,7 @@ export class NotebookService extends Service {
     if (existing !== undefined) return existing
     const runtime: SessionRuntime = {
       session,
+      events: processEventsFor(session),
       controller: new AbortController(),
       kernels: new Map(),
       pendingStarts: new Set(),
@@ -1977,7 +1981,7 @@ export class NotebookService extends Service {
   }
 
   private projection(session: Session): FoldedNotebooks {
-    const events = session.events
+    const events = this.runtimeFor(session).events
     const cached = this.projections.get(session)
     const lastEvent = events.at(-1)
     if (cached !== undefined && cached.events === events && cached.lastEvent === lastEvent) {
@@ -1996,7 +2000,7 @@ export class NotebookService extends Service {
 
   private reserveId(runtime: SessionRuntime, prefix: 'notebook' | 'cell' | 'exec'): string {
     const used = new Set<string>(runtime.reservedIds)
-    for (const event of runtime.session.events) {
+    for (const event of runtime.events) {
       switch (event.type) {
         case 'notebook/open':
           used.add(event.data.notebookId)
@@ -2024,46 +2028,14 @@ export class NotebookService extends Service {
         throw new Error(`notebook event ${JSON.stringify(spec.type)} must carry lossless JSON`)
       }
     }
-    const events = candidateEvents(session, specs)
-    return foldNotebooks([...session.events, ...events])
+    const runtime = this.runtimeFor(session)
+    const events = candidateEvents(runtime.events.length, specs)
+    return foldNotebooks([...runtime.events, ...events])
   }
 
   private appendSpecs(session: Session, specs: readonly NotebookEventSpec[]): void {
-    // The published development dependency is rc.6 while the package requires
-    // the rc.7 append-options API at runtime. Keep the future API assertion
-    // local until that Harness release is available on npm.
-    const append = session.append.bind(session) as unknown as (
-      type: NotebookEventSpec['type'],
-      data: NotebookEventSpec['data'],
-      options: { readonly ignorable: true },
-    ) => void
-    for (const spec of specs) {
-      switch (spec.type) {
-        case 'notebook/open':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/cell':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/execute':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/output':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/execute-end':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/kernel':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        case 'notebook/reload':
-          append(spec.type, spec.data, { ignorable: true })
-          break
-        default:
-          assertNever(spec)
-      }
-    }
+    const runtime = this.runtimeFor(session)
+    runtime.events.push(...candidateEvents(runtime.events.length, specs))
   }
 
   private disposeSession(session: Session): Promise<void> {
@@ -2330,9 +2302,17 @@ function reloadSpec(
   }
 }
 
-function candidateEvents(session: Session, specs: readonly NotebookEventSpec[]): SessionEvent[] {
+function processEventsFor(session: Session): SessionEvent[] {
+  const existing = PROCESS_NOTEBOOK_EVENTS.get(session)
+  if (existing !== undefined) return existing
+  const events: SessionEvent[] = []
+  PROCESS_NOTEBOOK_EVENTS.set(session, events)
+  return events
+}
+
+function candidateEvents(sequence: number, specs: readonly NotebookEventSpec[]): SessionEvent[] {
   return specs.map((spec, index): SessionEvent => {
-    const envelope = { seq: session.seq + index, time: Date.now() }
+    const envelope = { seq: sequence + index, time: Date.now() }
     switch (spec.type) {
       case 'notebook/open':
         return { type: spec.type, ...envelope, data: spec.data }

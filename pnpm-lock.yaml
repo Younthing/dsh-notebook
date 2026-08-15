@@ -62,9 +62,18 @@ importers:
 
   packages/client-ui-notebook:
     dependencies:
-      '@deepseek-ai/dsh-notebook-remote':
+      '@younthing/dsh-notebook-remote':
         specifier: workspace:^
         version: link:../notebook-remote
+      mdast-util-from-markdown:
+        specifier: ^2.0.3
+        version: 2.0.3
+      mdast-util-gfm:
+        specifier: ^3.1.0
+        version: 3.1.0
+      micromark-extension-gfm:
+        specifier: ^3.0.0
+        version: 3.0.0
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.1-rc.4
@@ -102,12 +111,6 @@ importers:
       '@deepseek-ai/dsh-invariants':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)
-      '@deepseek-ai/dsh-notebook-core':
-        specifier: workspace:^
-        version: link:../notebook-core
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
       '@deepseek-ai/dsh-session':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(1fd72bdf1d590c457c6916f29846e943)
@@ -117,12 +120,21 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.0)(@types/react@18.3.31)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@types/mdast':
+        specifier: ^4.0.4
+        version: 4.0.4
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31
       '@types/react-dom':
         specifier: ~18.3.0
         version: 18.3.0
+      '@younthing/dsh-notebook-core':
+        specifier: workspace:^
+        version: link:../notebook-core
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -132,25 +144,25 @@ importers:
 
   packages/notebook:
     dependencies:
-      '@deepseek-ai/dsh-client-ui-notebook':
+      '@younthing/dsh-client-ui-notebook':
         specifier: workspace:^
         version: link:../client-ui-notebook
-      '@deepseek-ai/dsh-notebook-core':
+      '@younthing/dsh-notebook-core':
         specifier: workspace:^
         version: link:../notebook-core
-      '@deepseek-ai/dsh-notebook-environment':
+      '@younthing/dsh-notebook-environment':
         specifier: workspace:^
         version: link:../notebook-environment
-      '@deepseek-ai/dsh-notebook-environment-uv':
+      '@younthing/dsh-notebook-environment-uv':
         specifier: workspace:^
         version: link:../notebook-environment-uv
-      '@deepseek-ai/dsh-notebook-kernel-jupyter':
+      '@younthing/dsh-notebook-kernel-jupyter':
         specifier: workspace:^
         version: link:../notebook-kernel-jupyter
-      '@deepseek-ai/dsh-notebook-remote':
+      '@younthing/dsh-notebook-remote':
         specifier: workspace:^
         version: link:../notebook-remote
-      '@deepseek-ai/dsh-tool-notebook':
+      '@younthing/dsh-tool-notebook':
         specifier: workspace:^
         version: link:../tool-notebook
     devDependencies:
@@ -163,12 +175,12 @@ importers:
 
   packages/notebook-core:
     dependencies:
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
       '@deepseek-ai/schemastery':
         specifier: 3.18.1-rc.4
         version: 3.18.1-rc.4
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.1-rc.4
@@ -243,9 +255,6 @@ importers:
       '@deepseek-ai/dsh-invariants':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
       '@deepseek-ai/dsh-sandbox':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))(@deepseek-ai/dsh-llm@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-attachment@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))(@deepseek-ai/dsh-timeout@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))))(@deepseek-ai/dsh-session@0.1.0-rc.6(1fd72bdf1d590c457c6916f29846e943))
@@ -255,6 +264,9 @@ importers:
       '@deepseek-ai/dsh-timeout':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
 
   packages/notebook-kernel-jupyter:
     dependencies:
@@ -268,15 +280,6 @@ importers:
       '@deepseek-ai/dsh-invariants':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)
-      '@deepseek-ai/dsh-notebook-core':
-        specifier: workspace:^
-        version: link:../notebook-core
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
-      '@deepseek-ai/dsh-notebook-environment-uv':
-        specifier: workspace:^
-        version: link:../notebook-environment-uv
       '@deepseek-ai/dsh-sandbox':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))(@deepseek-ai/dsh-llm@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-attachment@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))(@deepseek-ai/dsh-timeout@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))))(@deepseek-ai/dsh-session@0.1.0-rc.6(1fd72bdf1d590c457c6916f29846e943))
@@ -295,18 +298,27 @@ importers:
       '@deepseek-ai/dsh-timeout':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))
+      '@younthing/dsh-notebook-core':
+        specifier: workspace:^
+        version: link:../notebook-core
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
+      '@younthing/dsh-notebook-environment-uv':
+        specifier: workspace:^
+        version: link:../notebook-environment-uv
 
   packages/notebook-remote:
     dependencies:
-      '@deepseek-ai/dsh-notebook-core':
-        specifier: workspace:^
-        version: link:../notebook-core
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
       '@deepseek-ai/schemastery':
         specifier: 3.18.1-rc.4
         version: 3.18.1-rc.4
+      '@younthing/dsh-notebook-core':
+        specifier: workspace:^
+        version: link:../notebook-core
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -378,12 +390,6 @@ importers:
       '@deepseek-ai/dsh-llm':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-attachment@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))(@deepseek-ai/dsh-timeout@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)))
-      '@deepseek-ai/dsh-notebook-core':
-        specifier: workspace:^
-        version: link:../notebook-core
-      '@deepseek-ai/dsh-notebook-environment':
-        specifier: workspace:^
-        version: link:../notebook-environment
       '@deepseek-ai/dsh-output-retention':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1-rc.4))
@@ -399,6 +405,12 @@ importers:
       '@deepseek-ai/dsh-tools':
         specifier: 0.1.0-rc.6
         version: 0.1.0-rc.6(5be04ca38b7a2e1a8926406395429d52)
+      '@younthing/dsh-notebook-core':
+        specifier: workspace:^
+        version: link:../notebook-core
+      '@younthing/dsh-notebook-environment':
+        specifier: workspace:^
+        version: link:../notebook-environment
 
 packages:
 

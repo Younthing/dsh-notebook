@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment'
-import { CellId, ExecutionId, NotebookId, foldNotebooks } from '@deepseek-ai/dsh-notebook-core'
+import { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment'
+import { CellId, ExecutionId, NotebookId, foldNotebooks } from '@younthing/dsh-notebook-core'
 import { NotebookFileVersion } from '../src/brand.ts'
 
 describe('foldNotebooks', () => {

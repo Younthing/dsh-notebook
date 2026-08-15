@@ -1,10 +1,10 @@
 /**
  * Newline-delimited JSON-RPC client for the Python notebook supervisor.
- * @module @deepseek-ai/dsh-notebook-kernel-jupyter/connection
+ * @module @younthing/dsh-notebook-kernel-jupyter/connection
  */
 
 import type { Readable, Writable } from 'node:stream'
-import { BoundedLineReader } from '@deepseek-ai/dsh-subprocess'
+import { BoundedLineReader } from './line-reader.ts'
 
 interface JsonRpcResponse {
   readonly id?: unknown

@@ -1,6 +1,6 @@
 /**
  * Strict nbformat-v4 parsing and loss-preserving notebook mutations.
- * @module @deepseek-ai/dsh-notebook-core/ipynb
+ * @module @younthing/dsh-notebook-core/ipynb
  */
 
 import { createHash } from 'node:crypto'

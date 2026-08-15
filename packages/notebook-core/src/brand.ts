@@ -1,6 +1,6 @@
 /**
- * Notebook id factories owned by `@deepseek-ai/dsh-notebook-core`.
- * @module @deepseek-ai/dsh-notebook-core/brand
+ * Notebook id factories owned by `@younthing/dsh-notebook-core`.
+ * @module @younthing/dsh-notebook-core/brand
  */
 
 import type { Branded } from '@deepseek-ai/dsh-brand'

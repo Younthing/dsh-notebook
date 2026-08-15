@@ -1,6 +1,6 @@
 /**
  * Pure fold over durable notebook session events.
- * @module @deepseek-ai/dsh-notebook-core/fold
+ * @module @younthing/dsh-notebook-core/fold
  */
 
 import { isJsonValue } from '@deepseek-ai/dsh-session'

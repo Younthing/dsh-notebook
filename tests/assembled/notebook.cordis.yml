@@ -17,8 +17,8 @@
               - id: notebook-snapshot-fs
                 name: './tests/fixtures/notebook-snapshot-fs.ts'
               - id: notebook
-                name: '@deepseek-ai/dsh-notebook'
+                name: '@younthing/dsh-notebook'
               - id: tool-notebook
-                name: '@deepseek-ai/dsh-tool-notebook'
+                name: '@younthing/dsh-tool-notebook'
               - id: notebook-memory-backend
                 name: './tests/fixtures/notebook-memory-backend.ts'

@@ -2,7 +2,7 @@
 
 [English](notebook.md) | 中文
 
-Notebook 使用两个[三角色能力 seam](../user/develop/practice/index.md)。`ctx.notebooks` 拥有 workspace 文档、持久事件与进程内 kernel 生命周期；`ctx.notebookEnvironments` 拥有浏览器安全环境发现、固定配置操作与可信启动解析。默认提供方使用 uv 与 Jupyter，模型、Host 与浏览器消费方分别拥有自身交互策略。设计记录：[Notebook 能力 seam](../../.agents/notes/implemented/feature/2026-08-14-notebook-capability-seam.md)。
+Notebook 使用两个三角色能力。`ctx.notebooks` 拥有 workspace 文档、进程内投影与 kernel 生命周期；`ctx.notebookEnvironments` 拥有浏览器安全环境发现、固定配置操作与可信启动解析。默认提供方使用 uv 与 Jupyter，模型、Host 与浏览器消费方分别拥有自身交互策略。rc.6 基线会持久化 `.ipynb` 文件，但不会把外部 Notebook 事件追加到 Harness Session 日志。
 
 来源：[`types.ts`](../packages/notebook-core/src/types.ts)、[`kernel-types.ts`](../packages/notebook-core/src/kernel-types.ts)、[`output-types.ts`](../packages/notebook-core/src/output-types.ts)、[`brand.ts`](../packages/notebook-core/src/brand.ts)与 [`notebook-environment`](../packages/notebook-environment/src/index.ts)。
 
@@ -10,9 +10,9 @@ Notebook 使用两个[三角色能力 seam](../user/develop/practice/index.md)�
 
 `open()` 接受已有 `.ipynb`，目标缺失时报告 `NOT_FOUND`；`create()` 原子创建不存在的路径，发生冲突时报告 `ALREADY_EXISTS`。两者都发布 detached 文档；没有 Python 或 kernel 时仍可读取、编辑、插入、发现与 reload。有界发现返回 workspace 相对路径，不读取文件内容，也不恢复 Agent。
 
-显式环境 attach 启动第一个 kernel，并记录 `NotebookKernelSelection`。该选择不存在时，execute 与 inspect 报告 `ENVIRONMENT_REQUIRED`。持久选择存在但进程内 handle 丢失时，两项操作都会尝试恢复。成功 attach、restart 与 recovery 会发布 `notebook/kernel` 并推进 generation；reload 接受外部文件、保留选择，并退役旧 handle，而不启动另一个。
+显式环境 attach 启动第一个 kernel，并在进程内投影中记录 `NotebookKernelSelection`。该选择不存在时，execute 与 inspect 报告 `ENVIRONMENT_REQUIRED`。选择存在但进程内 handle 丢失时，两项操作都会尝试恢复。成功 attach、restart 与 recovery 会推进 generation；reload 接受外部文件、保留选择，并退役旧 handle，而不启动另一个。
 
-文件变更在事件发布前使用 compare-and-swap。持久输出保留 stream 记录、结构化错误、完整 MIME bundle 与 display-update 语义；光栅 MIME 值携带已授权附件引用。一个 kernel 的调用串行化，不同 Notebook kernel 可以并发执行。
+文件变更会先使用 compare-and-swap，再更新进程内投影。`.ipynb` 输出保留 stream 记录、结构化错误、完整 MIME bundle 与 display-update 语义；光栅 MIME 值携带已授权附件引用。一个 kernel 的调用串行化，不同 Notebook kernel 可以并发执行。
 
 ```ts type-equiv
 /** Opaque notebook document identity minted by {@link NotebookService}. */
@@ -39,7 +39,7 @@ interface NotebookKernelSelection {
 ```
 
 ```ts type-equiv
-/** Workspace-backed notebook document reconstructed from the session log. */
+/** Workspace-backed notebook document retained in the plugin process. */
 interface NotebookDocument {
   /** Registry-minted notebook identity. */
   readonly id: NotebookId

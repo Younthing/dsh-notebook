@@ -1,6 +1,6 @@
 /**
  * In-process memory kernel for tests and keyless compositions.
- * @module @deepseek-ai/dsh-notebook-core/memory-kernel
+ * @module @younthing/dsh-notebook-core/memory-kernel
  */
 
 import type {

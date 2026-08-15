@@ -1,4 +1,4 @@
-import type { NotebookId } from '@deepseek-ai/dsh-notebook-core/types'
+import type { NotebookId } from '@younthing/dsh-notebook-core/types'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   Button, IconCloseOutline16, IconPlusOutline16,

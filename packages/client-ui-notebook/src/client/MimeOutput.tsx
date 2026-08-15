@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import type { ReactElement } from 'react'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {
@@ -7,9 +7,12 @@ import type {
   NotebookMimeBundle,
   NotebookMimeValue,
   NotebookOutput,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { MarkdownImages } from '@deepseek-ai/dsh-client-ui-primitives'
+import { fromMarkdown } from 'mdast-util-from-markdown'
+import { gfmFromMarkdown } from 'mdast-util-gfm'
+import { gfm } from 'micromark-extension-gfm'
+import type { PhrasingContent, Root, RootContent } from 'mdast'
 import css from './notebook.module.css'
 
 /** Session-authorized raster bytes returned to a pure Notebook component. */
@@ -641,6 +644,192 @@ function attachmentName(url: string): string | undefined {
 }
 
 /**
+ * One Markdown render pass over a notebook cell: cell-local attachment images
+ * resolve through the authorized loader while every other node follows safe
+ * GFM semantics (raw HTML stays literal text, links and remote images require
+ * absolute HTTP(S), unresolved attachment images keep their alt text).
+ */
+interface NotebookMarkdownRenderContext {
+  readonly attachments: NotebookCellAttachments
+  readonly loadAttachment: NotebookAttachmentLoader
+  readonly labels: MimeOutputLabels
+  readonly formatOmitted: (count: number, unit: 'rows' | 'points' | 'columns') => string
+}
+
+function renderBlocks(content: readonly RootContent[], context: NotebookMarkdownRenderContext): ReactElement[] {
+  const blocks: ReactElement[] = []
+  let index = 0
+  for (const node of content) {
+    const rendered = renderBlock(node, context, `notebook-markdown:block:${index}`)
+    if (rendered !== null) blocks.push(rendered)
+    index += 1
+  }
+  return blocks
+}
+
+function renderBlock(node: RootContent, context: NotebookMarkdownRenderContext, key: string): ReactElement | null {
+  switch (node.type) {
+    case 'paragraph':
+      return <p key={key}>{renderPhrasing(node.children, context, key)}</p>
+    case 'heading': {
+      const Tag = headingTag(node.depth)
+      return <Tag key={key}>{renderPhrasing(node.children, context, key)}</Tag>
+    }
+    case 'code':
+      return (
+        <pre key={key} className={css.outputPre}>
+          <code>{node.value}</code>
+        </pre>
+      )
+    case 'blockquote':
+      return <blockquote key={key}>{renderBlocks(node.children, context)}</blockquote>
+    case 'list': {
+      const Tag = node.ordered ? 'ol' : 'ul'
+      return (
+        <Tag key={key} {...(node.ordered && node.start !== null && node.start !== 1 ? { start: node.start } : {})}>
+          {node.children.map((item, itemIndex) => (
+            <li key={`${key}:item:${itemIndex}`}>
+              {item.checked === undefined
+                ? renderBlocks(item.children, context)
+                : (
+                  <>
+                    <input type="checkbox" checked={item.checked === true} readOnly />
+                    {' '}
+                    {renderBlocks(item.children, context)}
+                  </>
+                )}
+            </li>
+          ))}
+        </Tag>
+      )
+    }
+    case 'thematicBreak':
+      return <hr key={key} />
+    case 'table':
+      return renderTable(node, context, key)
+    case 'html':
+      // Raw HTML never enters the DOM: render it as literal text.
+      return <Fragment key={key}>{node.value}</Fragment>
+    case 'definition':
+    case 'footnoteDefinition':
+      return null
+    default:
+      return null
+  }
+}
+
+function renderTable(node: Extract<RootContent, { type: 'table' }>, context: NotebookMarkdownRenderContext, key: string): ReactElement {
+  const rows = node.children
+  const header = rows[0]
+  return (
+    <table key={key}>
+      {header === undefined ? null : (
+        <thead>
+          <tr>
+            {header.children.map((cell, cellIndex) => (
+              <th key={`${key}:head:${cellIndex}`}>{renderPhrasing(cell.children, context, `${key}:head:${cellIndex}`)}</th>
+            ))}
+          </tr>
+        </thead>
+      )}
+      <tbody>
+        {rows.slice(1).map((row, rowIndex) => (
+          <tr key={`${key}:row:${rowIndex}`}>
+            {row.children.map((cell, cellIndex) => (
+              <td key={`${key}:row:${rowIndex}:cell:${cellIndex}`}>
+                {renderPhrasing(cell.children, context, `${key}:row:${rowIndex}:cell:${cellIndex}`)}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function renderPhrasing(content: readonly PhrasingContent[], context: NotebookMarkdownRenderContext, keyPrefix: string): ReactElement[] {
+  const nodes: ReactElement[] = []
+  content.forEach((node, index) => {
+    const rendered = renderInline(node, context, `${keyPrefix}:inline:${index}`)
+    if (rendered !== null) nodes.push(rendered)
+  })
+  return nodes
+}
+
+function renderInline(node: PhrasingContent, context: NotebookMarkdownRenderContext, key: string): ReactElement | null {
+  switch (node.type) {
+    case 'text':
+      return <Fragment key={key}>{node.value}</Fragment>
+    case 'emphasis':
+      return <em key={key}>{renderPhrasing(node.children, context, key)}</em>
+    case 'strong':
+      return <strong key={key}>{renderPhrasing(node.children, context, key)}</strong>
+    case 'delete':
+      return <del key={key}>{renderPhrasing(node.children, context, key)}</del>
+    case 'inlineCode':
+      return <code key={key}>{node.value}</code>
+    case 'link': {
+      const href = node.url
+      if (/^https?:\/\//i.test(href)) {
+        return <a key={key} href={href}>{renderPhrasing(node.children, context, key)}</a>
+      }
+      // Unsafe protocol: keep the label, never the destination.
+      return <Fragment key={key}>{renderPhrasing(node.children, context, key)}</Fragment>
+    }
+    case 'image':
+      return renderImage(node, context, key)
+    case 'break':
+      return <br key={key} />
+    case 'html':
+      return <Fragment key={key}>{node.value}</Fragment>
+    case 'footnoteReference':
+      return <Fragment key={key}>{`[${node.label ?? node.identifier}]`}</Fragment>
+    default:
+      return null
+  }
+}
+
+function renderImage(
+  node: Extract<PhrasingContent, { type: 'image' }>,
+  context: NotebookMarkdownRenderContext,
+  key: string,
+): ReactElement {
+  const name = attachmentName(node.url)
+  const bundle = name === undefined || !Object.hasOwn(context.attachments, name)
+    ? undefined
+    : context.attachments[name]
+  if (bundle !== undefined) {
+    return (
+      <MimeBundle
+        key={key}
+        bundle={bundle}
+        imageAlt={node.alt ?? ''}
+        inlineImage
+        loadAttachment={context.loadAttachment}
+        labels={context.labels}
+        formatOmitted={context.formatOmitted}
+      />
+    )
+  }
+  if (/^https?:\/\//i.test(node.url)) {
+    return <img key={key} src={node.url} alt={node.alt ?? ''} />
+  }
+  // Unresolved or unsafe image destination: keep the alt text visible.
+  return <Fragment key={key}>{node.alt ?? ''}</Fragment>
+}
+
+function headingTag(depth: 1 | 2 | 3 | 4 | 5 | 6): 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' {
+  switch (depth) {
+    case 1: return 'h1'
+    case 2: return 'h2'
+    case 3: return 'h3'
+    case 4: return 'h4'
+    case 5: return 'h5'
+    default: return 'h6'
+  }
+}
+
+/**
  * Render Markdown while resolving only its cell-local `attachment:name` image vocabulary.
  * @param props - Source text, cell bundles, authorized raster loader, labels, and omission formatter.
  * @returns Safe GFM with owner-rendered cell attachments.
@@ -652,24 +841,15 @@ export function NotebookMarkdown({
   labels = DEFAULT_LABELS,
   formatOmitted = (count, unit) => `${String(count)} additional ${unit} omitted.`,
 }: NotebookMarkdownProps): ReactElement {
-  const images = useMemo<MarkdownImages>(() => ({
-    resolve: (url, alt) => {
-      const name = attachmentName(url)
-      const bundle = name === undefined || !Object.hasOwn(attachments, name)
-        ? undefined
-        : attachments[name]
-      if (bundle === undefined) return undefined
-      return (
-        <MimeBundle
-          bundle={bundle}
-          imageAlt={alt}
-          inlineImage
-          loadAttachment={loadAttachment}
-          labels={labels}
-          formatOmitted={formatOmitted}
-        />
-      )
-    },
+  const root = useMemo<Root>(() => fromMarkdown(text, {
+    extensions: [gfm()],
+    mdastExtensions: [gfmFromMarkdown()],
+  }), [text])
+  const context = useMemo<NotebookMarkdownRenderContext>(() => ({
+    attachments,
+    loadAttachment,
+    labels,
+    formatOmitted,
   }), [attachments, formatOmitted, labels, loadAttachment])
-  return <MarkdownText text={text} images={images} />
+  return <Fragment>{renderBlocks(root.children, context)}</Fragment>
 }

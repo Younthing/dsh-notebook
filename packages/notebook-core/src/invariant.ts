@@ -1,6 +1,6 @@
 /**
  * Package-owned strict notebook stream invariant.
- * @module @deepseek-ai/dsh-notebook-core/invariant
+ * @module @younthing/dsh-notebook-core/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -8,7 +8,7 @@ import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 import { NotebookLogError, foldNotebooks } from './fold.ts'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-notebook-core'
+const PACKAGE_NAME = '@younthing/dsh-notebook-core'
 
 /** Cordis invariant-companion plugin name. */
 export const name = 'notebook-invariant'

@@ -9,7 +9,7 @@ import type {
   NotebookMimeBundle,
   NotebookMimeValue,
   NotebookOutput,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import { notebookImageAttachmentJson } from './mime.ts'
 
 const encoder = new TextEncoder()

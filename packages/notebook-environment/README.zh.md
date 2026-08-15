@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-notebook-environment
+# @younthing/dsh-notebook-environment
 
 [English](README.md) | 中文
 
@@ -14,7 +14,7 @@
 
 #### 模型看到的内容
 
-本包不直接向模型提供内容。任何模型可见的环境提示都由 `@deepseek-ai/dsh-tool-notebook` Consumer 管理。
+本包不直接向模型提供内容。任何模型可见的环境提示都由 `@younthing/dsh-tool-notebook` Consumer 管理。
 
 #### Token 影响
 

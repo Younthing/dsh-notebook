@@ -1,5 +1,12 @@
 node_modules/
+.pnpm-store/
 lib/
+!packages/notebook-remote/lib/
+packages/notebook-remote/lib/*
+!packages/notebook-remote/lib/typert.host.js
+!packages/notebook-remote/lib/typert.host.d.ts
+!packages/notebook-remote/lib/typert.remote-client.js
+!packages/notebook-remote/lib/typert.remote-client.d.ts
 coverage/
 artifacts/
 *.tsbuildinfo

@@ -1,12 +1,12 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-notebook`.
- * @module @deepseek-ai/dsh-tool-notebook/invariant
+ * Package-owned invariant companion for `@younthing/dsh-tool-notebook`.
+ * @module @younthing/dsh-tool-notebook/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-notebook'
+const PACKAGE_NAME = '@younthing/dsh-tool-notebook'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-notebook-invariant'
@@ -15,7 +15,7 @@ export const inject = ['invariants']
 
 /**
  * No runtime invariant: tool registration is ephemeral registry state and durable
- * notebook facts are validated by `@deepseek-ai/dsh-notebook-core`.
+ * notebook facts are validated by `@younthing/dsh-notebook-core`.
  */
 const install: InvariantInstaller = () => {}
 

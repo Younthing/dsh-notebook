@@ -12,7 +12,7 @@ import type {
   NotebookMimeBundle,
   NotebookOutput,
   NotebookUpdateDisplayMutation,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import type {
   NotebookConversationViewNode, NotebookSessionEvent, NotebookSnapshot,
 } from './notebook-contract.ts'

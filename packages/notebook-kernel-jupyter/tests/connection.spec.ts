@@ -9,7 +9,7 @@ import {
   JsonLineRpcConnection,
   SupervisorRpcError,
   SupervisorRpcTimeoutError,
-} from '@deepseek-ai/dsh-notebook-kernel-jupyter'
+} from '@younthing/dsh-notebook-kernel-jupyter'
 
 const SUPERVISOR = join(
   dirname(fileURLToPath(import.meta.url)),

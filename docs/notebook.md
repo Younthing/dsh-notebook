@@ -2,7 +2,7 @@
 
 English | [中文](notebook.zh.md)
 
-Notebook uses two [three-role capability seams](../user/develop/practice/index.md). `ctx.notebooks` owns workspace documents, durable events, and process-local kernel lifecycle; `ctx.notebookEnvironments` owns browser-safe environment discovery, fixed provisioning operations, and trusted launch resolution. The default Providers use uv and Jupyter, while model, Host, and browser Consumers own their respective interaction policies. Design record: [Notebook capability seam](../../.agents/notes/implemented/feature/2026-08-14-notebook-capability-seam.md).
+Notebook uses two three-role capabilities. `ctx.notebooks` owns workspace documents, process-local projections, and kernel lifecycle; `ctx.notebookEnvironments` owns browser-safe environment discovery, fixed provisioning operations, and trusted launch resolution. The default Providers use uv and Jupyter, while model, Host, and browser Consumers own their respective interaction policies. The rc.6 baseline persists `.ipynb` files but does not append external Notebook events to the Harness Session log.
 
 Source: [`types.ts`](../packages/notebook-core/src/types.ts), [`kernel-types.ts`](../packages/notebook-core/src/kernel-types.ts), [`output-types.ts`](../packages/notebook-core/src/output-types.ts), [`brand.ts`](../packages/notebook-core/src/brand.ts), and [`notebook-environment`](../packages/notebook-environment/src/index.ts).
 
@@ -10,9 +10,9 @@ Source: [`types.ts`](../packages/notebook-core/src/types.ts), [`kernel-types.ts`
 
 `open()` accepts an existing `.ipynb` and reports `NOT_FOUND` for a missing target; `create()` atomically creates an absent path and reports `ALREADY_EXISTS` for a conflict. Both publish a detached document that remains readable, editable, insertable, discoverable, and reloadable without Python or a kernel. Bounded discovery returns workspace-relative paths without reading file content or restoring an Agent.
 
-An explicit environment attachment starts the first kernel and records `NotebookKernelSelection`. Execute and inspect report `ENVIRONMENT_REQUIRED` while that selection is absent. When the durable selection exists but its process-local handle is gone, either operation attempts recovery. Successful attach, restart, and recovery publish `notebook/kernel` and advance its generation; reload accepts the external file, preserves the selection, and retires the old handle without starting another.
+An explicit environment attachment starts the first kernel and records `NotebookKernelSelection` in the process-local projection. Execute and inspect report `ENVIRONMENT_REQUIRED` while that selection is absent. When the selection exists but its process-local handle is gone, either operation attempts recovery. Successful attach, restart, and recovery advance its generation; reload accepts the external file, preserves the selection, and retires the old handle without starting another.
 
-File mutations use compare-and-swap before event publication. Durable output retains stream records, structured errors, full MIME bundles, and display-update semantics; raster MIME values carry authorized attachment references. Calls for one kernel serialize, while different notebook kernels may execute concurrently.
+File mutations use compare-and-swap before updating the process-local projection. The `.ipynb` output retains stream records, structured errors, full MIME bundles, and display-update semantics; raster MIME values carry authorized attachment references. Calls for one kernel serialize, while different notebook kernels may execute concurrently.
 
 ```ts type-equiv
 /** Opaque notebook document identity minted by {@link NotebookService}. */
@@ -39,7 +39,7 @@ interface NotebookKernelSelection {
 ```
 
 ```ts type-equiv
-/** Workspace-backed notebook document reconstructed from the session log. */
+/** Workspace-backed notebook document retained in the plugin process. */
 interface NotebookDocument {
   /** Registry-minted notebook identity. */
   readonly id: NotebookId

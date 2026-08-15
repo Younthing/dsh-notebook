@@ -1,27 +1,28 @@
 /**
- * Browser notebook plugin occupying the optional companion panel.
+ * Browser notebook plugin occupying the optional details column.
  */
 import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {
   CellId,
   CellType,
+  NotebookDocument,
   NotebookId,
   NotebookKernelRuntimeStatus,
-} from '@deepseek-ai/dsh-notebook-core/client'
+} from '@younthing/dsh-notebook-core/client'
 import type {
   NotebookEnvironmentCatalog,
   NotebookEnvironmentId,
-} from '@deepseek-ai/dsh-notebook-environment/client'
-import notebookRemote from '@deepseek-ai/dsh-notebook-remote/remote'
-import type { NotebookRemoteError, NotebookRemoteResult } from '@deepseek-ai/dsh-notebook-remote/types'
+} from '@younthing/dsh-notebook-environment/client'
+import notebookRemote from '@younthing/dsh-notebook-remote/remote'
+import type { NotebookRemoteError, NotebookRemoteResult } from '@younthing/dsh-notebook-remote/types'
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: supplies ctx.remote and the generated notebooks namespace merge.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type {} from '@deepseek-ai/dsh-notebook-remote/remote'
+import type {} from '@younthing/dsh-notebook-remote/remote'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-// Type-only: the companion SlotMap row must be in the program.
+// Type-only: the details SlotMap row must be in the program.
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { en, NS, zh } from './locales.ts'
@@ -54,7 +55,7 @@ function unwrap<T>(result: RemoteResult<NotebookRemoteResult<T>>): T {
   return result.value.value
 }
 
-function environmentCatalog(value: import('@deepseek-ai/dsh-notebook-remote/types').NotebookEnvironmentCatalog): NotebookEnvironmentCatalog {
+function environmentCatalog(value: import('@younthing/dsh-notebook-remote/types').NotebookEnvironmentCatalog): NotebookEnvironmentCatalog {
   return {
     ...value,
     environments: value.environments.map(entry => ({
@@ -64,9 +65,15 @@ function environmentCatalog(value: import('@deepseek-ai/dsh-notebook-remote/type
   }
 }
 
-function runtimeStatus(value: import('@deepseek-ai/dsh-notebook-remote/types').NotebookKernelRuntimeStatus): NotebookKernelRuntimeStatus {
+function runtimeStatus(value: import('@younthing/dsh-notebook-remote/types').NotebookKernelRuntimeStatus): NotebookKernelRuntimeStatus {
   if (value.status === 'detached') return value
   return { ...value, environmentId: value.environmentId as NotebookEnvironmentId }
+}
+
+function notebookDocument(
+  value: import('@younthing/dsh-notebook-remote/types').NotebookDocument,
+): NotebookDocument {
+  return value as unknown as NotebookDocument
 }
 
 function decodeBase64(value: string): Uint8Array {
@@ -90,24 +97,28 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
       order: 30,
       locale: NS,
       inject: (): NotebookPanelActionInjected => ({
-        toggleNotebookPanel: () => { ctx.layout.toggleCompanion() },
+        toggleNotebookPanel: () => { ctx.layout.openDetails() },
       }),
     }, NotebookPanelAction),
   )
-  ctx.slots.inject('companion', () => ctx.slots.register({
-    name: 'companion',
+  // rc.6 baseline: the AppFrame right column is the single `details` seat
+  // occupied by ui-conversation's tool-details panel at priority 0. The
+  // The notebook panel shadows the standard tool-details cell because lower priority wins.
+  ctx.slots.inject('details', () => ctx.slots.register({
+    name: 'details',
+    priority: -1,
     locale: NS,
     inject: (sessionId: SessionId): NotebookViewInjected => ({
       discoverNotebooks: async (after, signal) => unwrap(await ctx.remote.notebooks.discover({
         sessionId,
         ...(after === undefined ? {} : { after }),
       }, signal)),
-      openNotebook: async (path, signal) => {
-        unwrap(await ctx.remote.notebooks.open({ sessionId, path }, signal))
-      },
-      createNotebook: async (path, signal) => {
-        unwrap(await ctx.remote.notebooks.create({ sessionId, path }, signal))
-      },
+      openNotebook: async (path, signal) => notebookDocument(
+        unwrap(await ctx.remote.notebooks.open({ sessionId, path }, signal)),
+      ),
+      createNotebook: async (path, signal) => notebookDocument(
+        unwrap(await ctx.remote.notebooks.create({ sessionId, path }, signal)),
+      ),
       environmentCatalog: async signal => environmentCatalog(unwrap(
         await ctx.remote.notebooks.environmentCatalog({ sessionId }, signal),
       )),
@@ -130,27 +141,29 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
         environmentId: NotebookEnvironmentId,
         signal: AbortSignal,
       ) => {
-        unwrap(await ctx.remote.notebooks.attachEnvironment({
+        return notebookDocument(unwrap(await ctx.remote.notebooks.attachEnvironment({
           sessionId, notebookId, environmentId,
-        }, signal))
+        }, signal)))
       },
       runtimeStatus: async (notebookId: NotebookId, signal: AbortSignal) => runtimeStatus(unwrap(
         await ctx.remote.notebooks.runtimeStatus({ sessionId, notebookId }, signal),
       )),
       editCell: async (notebookId: NotebookId, cellId: CellId, source: string) => {
-        unwrap(await ctx.remote.notebooks.editCell({ sessionId, notebookId, cellId, source }))
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.editCell({ sessionId, notebookId, cellId, source }),
+        ).document)
       },
       insertCell: async (
         notebookId: NotebookId,
         afterCellId: CellId | undefined,
         cellType: CellType,
       ) => {
-        unwrap(await ctx.remote.notebooks.insertCell({
+        return notebookDocument(unwrap(await ctx.remote.notebooks.insertCell({
           sessionId,
           notebookId,
           cellType,
           ...(afterCellId === undefined ? {} : { afterCellId }),
-        }))
+        })).document)
       },
       runCell: async (notebookId: NotebookId, cellId: CellId, source: string) => {
         const result = unwrap(await ctx.remote.notebooks.runCell({
@@ -159,13 +172,17 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
         if (result.status === 'error') {
           throw new Error(result.error ?? 'notebook execution failed')
         }
-        return result.status
+        return { status: result.status, document: notebookDocument(result.document) }
       },
       restartNotebook: async (notebookId: NotebookId) => {
-        unwrap(await ctx.remote.notebooks.restart({ sessionId, notebookId }))
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.restart({ sessionId, notebookId }),
+        ).document)
       },
       reloadNotebook: async (notebookId: NotebookId) => {
-        unwrap(await ctx.remote.notebooks.reload({ sessionId, notebookId }))
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.reload({ sessionId, notebookId }),
+        ).document)
       },
       interruptNotebook: async (notebookId: NotebookId) => {
         unwrap(await ctx.remote.notebooks.interrupt({ sessionId, notebookId }))
@@ -186,13 +203,16 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
         await session.loadOlder()
       },
       replaceSession: async () => {
-        await ctx.workspaces.replaceSession(sessionId)
+        // rc.6 workspaces exposes archiveSession only: archiving the current
+        // session clears the selection into the New Session view, which is the
+        // replacement available through the rc.6 workspace API.
+        await ctx.workspaces.archiveSession(sessionId)
       },
-      closeNotebookPanel: () => { ctx.layout.closeCompanion() },
+      closeNotebookPanel: () => { ctx.layout.closeDetails() },
     }),
   }, NotebookView))
   return async () => {
-    ctx.layout.closeCompanion()
+    ctx.layout.closeDetails()
     await disposeRemote()
   }
 }

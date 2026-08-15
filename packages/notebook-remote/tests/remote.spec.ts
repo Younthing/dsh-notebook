@@ -10,16 +10,16 @@ import {
   NotebookId,
   NotebookError,
   NotebookPersistenceError,
-} from '@deepseek-ai/dsh-notebook-core'
-import type { NotebookDiscoveryOptions } from '@deepseek-ai/dsh-notebook-core'
+} from '@younthing/dsh-notebook-core'
+import type { NotebookDiscoveryOptions } from '@younthing/dsh-notebook-core'
 import {
   NotebookEnvironmentError,
   NotebookEnvironmentId,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import type {
   NotebookEnvironmentOperationRequest,
   NotebookEnvironmentProvisionRequest,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import type { Session, SessionEvent, SessionHeader, UserMessage } from '@deepseek-ai/dsh-session'
@@ -396,7 +396,8 @@ describe('createApiProxy notebook domain', () => {
       executionCount: 7,
       error: 'kernel rejected the cell',
     })
-    ctx.provide('notebooks', { editCell, execute } as never)
+    const get = vi.fn().mockReturnValue(document())
+    ctx.provide('notebooks', { editCell, execute, get } as never)
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'test', model: 'test' }),
       cwd: '/workspace',
@@ -421,6 +422,7 @@ describe('createApiProxy notebook domain', () => {
         status: 'error',
         executionCount: 7,
         error: 'kernel rejected the cell',
+        document: document(),
       },
     })
     expect(editCell).toHaveBeenCalledWith(
@@ -558,14 +560,15 @@ describe('createApiProxy notebook domain', () => {
 
   it('routes reload as a user-initiated full-document recovery', async () => {
     const { ctx, session } = await harness()
-    const reload = vi.fn().mockResolvedValue({
+    const reloaded = {
       id: NotebookId('notebook-host'),
       path: 'analysis.ipynb',
       fileVersion: NotebookFileVersion('v3'),
       nbformatMinor: 5,
       metadata: { external: true },
       cells: [],
-    })
+    }
+    const reload = vi.fn().mockResolvedValue(reloaded)
     ctx.provide('notebooks', { reload } as never)
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'test', model: 'test' }),
@@ -580,7 +583,7 @@ describe('createApiProxy notebook domain', () => {
 
     expect(response.result).toEqual({
       ok: true,
-      value: { fileVersion: NotebookFileVersion('v3') },
+      value: { fileVersion: NotebookFileVersion('v3'), document: reloaded },
     })
     expect(reload).toHaveBeenCalledWith(
       session,

@@ -5,14 +5,15 @@ import type {
   CellId,
   CellType,
   NotebookDiscoveryPage,
+  NotebookDocument,
   NotebookId,
   NotebookKernelRuntimeStatus,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import type {
   NotebookEnvironmentCatalog,
   NotebookEnvironmentErrorCategory,
   NotebookEnvironmentId,
-} from '@deepseek-ai/dsh-notebook-environment/types'
+} from '@younthing/dsh-notebook-environment/types'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { NotebookDocumentView } from './NotebookDocumentView.tsx'
 import { NotebookDocumentSwitcher } from './NotebookDocumentSwitcher.tsx'
@@ -143,9 +144,9 @@ export interface NotebookViewInjected {
   /** Discover one bounded page without opening a document or resuming an Agent. */
   discoverNotebooks: (after: string | undefined, signal: AbortSignal) => Promise<NotebookDiscoveryPage>
   /** Open one existing workspace Notebook. */
-  openNotebook: (path: string, signal: AbortSignal) => Promise<void>
+  openNotebook: (path: string, signal: AbortSignal) => Promise<NotebookDocument>
   /** Create one absent workspace Notebook without overwriting. */
-  createNotebook: (path: string, signal: AbortSignal) => Promise<void>
+  createNotebook: (path: string, signal: AbortSignal) => Promise<NotebookDocument>
   /** Read the workspace environment catalog without exposing executable paths. */
   environmentCatalog: (signal: AbortSignal) => Promise<NotebookEnvironmentCatalog>
   /** Install the verified private uv release. */
@@ -164,30 +165,34 @@ export interface NotebookViewInjected {
     notebookId: NotebookId,
     environmentId: NotebookEnvironmentId,
     signal: AbortSignal,
-  ) => Promise<void>
+  ) => Promise<NotebookDocument>
   /** Read process-local kernel state for one document. */
   runtimeStatus: (
     notebookId: NotebookId,
     signal: AbortSignal,
   ) => Promise<NotebookKernelRuntimeStatus>
   /** Persist one cell's source text. */
-  editCell: (notebookId: NotebookId, cellId: CellId, source: string) => Promise<void>
+  editCell: (notebookId: NotebookId, cellId: CellId, source: string) => Promise<NotebookDocument>
   /** Insert one cell after a stable predecessor. */
   insertCell: (
     notebookId: NotebookId,
     afterCellId: CellId | undefined,
     cellType: CellType,
-  ) => Promise<void>
+  ) => Promise<NotebookDocument>
   /** Persist optional source and execute one code cell as a user operation. */
   runCell: (
     notebookId: NotebookId,
     cellId: CellId,
     source: string,
-  ) => Promise<'ok' | 'cancelled'>
+  ) => Promise<
+    | 'ok'
+    | 'cancelled'
+    | { readonly status: 'ok' | 'cancelled'; readonly document: NotebookDocument }
+  >
   /** Restart a document's selected environment. */
-  restartNotebook: (notebookId: NotebookId) => Promise<void>
+  restartNotebook: (notebookId: NotebookId) => Promise<NotebookDocument>
   /** Replace one document with its current complete disk revision. */
-  reloadNotebook: (notebookId: NotebookId) => Promise<void>
+  reloadNotebook: (notebookId: NotebookId) => Promise<NotebookDocument>
   /** Interrupt the active execution for one document. */
   interruptNotebook: (notebookId: NotebookId) => Promise<void>
   /** Resolve one raster through the currently rendered Session. */
@@ -210,16 +215,16 @@ export function NotebookView({
   installUv, installPython, createEnvironment, attachEnvironment, runtimeStatus,
   editCell, insertCell, runCell, restartNotebook, reloadNotebook, interruptNotebook,
   loadAttachment, loadOlder, replaceSession, closeNotebookPanel, t,
-}: PropsRuntime<'companion'> & InjectFace<NotebookViewInjected> & PropsLocale<'notebook'>) {
-  const snapshot = useSession(session => session.views.get('notebook') ?? EMPTY_NOTEBOOK_SNAPSHOT)
+}: PropsRuntime<'details'> & InjectFace<NotebookViewInjected> & PropsLocale<'notebook'>) {
   const openState = useSession(session => session.openState)
   const hasMore = useSession(session => session.hasMore)
   const loadingOlder = useSession(session => session.loadingOlder)
   const historyError = useSession(session => session.openError)
-  const notebooks = snapshot.folded.notebooks
   const historyReady = openState === 'open'
-    && !snapshot.incomplete
-    && snapshot.protocolError === null
+  const snapshot = useSession(session => session.views.get('notebook') ?? EMPTY_NOTEBOOK_SNAPSHOT)
+  const projectedNotebooks = snapshot.folded.notebooks
+  const [notebooks, setNotebooks] = useState<readonly NotebookDocument[]>(projectedNotebooks)
+  const ownsProjection = useRef(false)
 
   const [drafts, setDrafts] = useState<ReadonlyMap<string, CellDraft>>(() => new Map())
   const [actions, setActions] = useState<ReadonlyMap<string, NotebookMutationState>>(() => new Map())
@@ -239,6 +244,22 @@ export function NotebookView({
   const [runtimeStatuses, setRuntimeStatuses] = useState<ReadonlyMap<string, NotebookKernelRuntimeStatus>>(
     () => new Map(),
   )
+
+  const publishDocument = useCallback((document: NotebookDocument | undefined): void => {
+    if (document === undefined) return
+    ownsProjection.current = true
+    setNotebooks((current) => {
+      const index = current.findIndex(candidate => candidate.id === document.id)
+      if (index < 0) return [...current, document]
+      const next = [...current]
+      next[index] = document
+      return next
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!ownsProjection.current) setNotebooks(projectedNotebooks)
+  }, [projectedNotebooks])
 
   const inFlight = useRef(new Map<string, Promise<boolean>>())
   const pendingDocumentRef = useRef<PendingDocument>()
@@ -420,8 +441,10 @@ export function NotebookView({
     const controller = new AbortController()
     documentController.current = controller
     try {
-      if (kind === 'open') await openNotebook(path, controller.signal)
-      else await createNotebook(path, controller.signal)
+      const document = kind === 'open'
+        ? await openNotebook(path, controller.signal)
+        : await createNotebook(path, controller.signal)
+      publishDocument(document)
     } catch (error: unknown) {
       if (pendingDocumentRef.current !== pending) return
       pendingDocumentRef.current = undefined
@@ -433,7 +456,7 @@ export function NotebookView({
         error: error instanceof Error ? error.message : String(error),
       })
     }
-  }, [createNotebook, notebooks, openNotebook, setAction, t])
+  }, [createNotebook, notebooks, openNotebook, publishDocument, setAction, t])
 
   const durableSources = useMemo(() => {
     const sources = new Map<string, string>()
@@ -510,10 +533,10 @@ export function NotebookView({
       `edit:${key}`,
       `edit:${key}`,
       'edit',
-      async () => { await editCell(notebookId, cellId, source) },
+      async () => { publishDocument(await editCell(notebookId, cellId, source)) },
     )
     if (saved) acknowledgeDraft(key, source)
-  }, [acknowledgeDraft, editCell, perform])
+  }, [acknowledgeDraft, editCell, perform, publishDocument])
 
   const run = useCallback(async (
     notebookId: NotebookId,
@@ -528,11 +551,18 @@ export function NotebookView({
       `kernel:${String(notebookId)}`,
       `run:${key}`,
       'run',
-      async () => { outcome = await runCell(notebookId, cellId, source) },
+      async () => {
+        const result = await runCell(notebookId, cellId, source)
+        if (typeof result === 'string') outcome = result
+        else {
+          outcome = result.status
+          publishDocument(result.document)
+        }
+      },
     )
     if (submitted) acknowledgeDraft(key, source)
     return submitted && outcome === 'ok'
-  }, [acknowledgeDraft, perform, runCell])
+  }, [acknowledgeDraft, perform, publishDocument, runCell])
 
   const insert = useCallback(async (
     notebookId: NotebookId,
@@ -543,22 +573,22 @@ export function NotebookView({
       `insert:${String(notebookId)}`,
       `insert:${String(notebookId)}`,
       'insert',
-      async () => { await insertCell(notebookId, afterCellId, cellType) },
+      async () => { publishDocument(await insertCell(notebookId, afterCellId, cellType)) },
     )
-  }, [insertCell, perform])
+  }, [insertCell, perform, publishDocument])
 
   const restart = useCallback(async (notebookId: NotebookId): Promise<void> => {
     const key = `restart:${String(notebookId)}`
     await perform(`kernel:${String(notebookId)}`, key, 'restart', async () => {
-      await restartNotebook(notebookId)
+      publishDocument(await restartNotebook(notebookId))
     })
-  }, [perform, restartNotebook])
+  }, [perform, publishDocument, restartNotebook])
 
   const reload = useCallback(async (notebookId: NotebookId): Promise<void> => {
     const key = `reload:${String(notebookId)}`
     const environmentId = runtimeRoster.current.find(item => item.id === notebookId)?.environmentId
     const reloaded = await perform(`kernel:${String(notebookId)}`, key, 'reload', async () => {
-      await reloadNotebook(notebookId)
+      publishDocument(await reloadNotebook(notebookId))
     })
     if (!reloaded) return
     if (environmentId !== undefined) {
@@ -588,7 +618,7 @@ export function NotebookView({
       return next.size === current.size ? current : next
     })
     setSelectedCell(current => current?.startsWith(cellPrefix) === true ? undefined : current)
-  }, [perform, reloadNotebook])
+  }, [perform, publishDocument, reloadNotebook])
 
   const interrupt = useCallback(async (notebookId: NotebookId): Promise<void> => {
     const key = `interrupt:${String(notebookId)}`
@@ -676,13 +706,13 @@ export function NotebookView({
     const previous = environmentFlows.get(key)
     setEnvironmentPhase(notebookId, 'attaching', previous)
     try {
-      await attachEnvironment(notebookId, environmentId, operation.signal)
+      publishDocument(await attachEnvironment(notebookId, environmentId, operation.signal))
       if (operation.signal.aborted || environmentControllers.current.get(key) !== operation) return
     } catch (error: unknown) {
       if (operation.signal.aborted || isAbort(error)) return
       setEnvironmentFlow(notebookId, failedEnvironmentFlow(previous, error))
     }
-  }, [attachEnvironment, environmentFlows, setEnvironmentFlow, setEnvironmentPhase])
+  }, [attachEnvironment, environmentFlows, publishDocument, setEnvironmentFlow, setEnvironmentPhase])
 
   const provision = useCallback(async (
     notebookId: NotebookId,

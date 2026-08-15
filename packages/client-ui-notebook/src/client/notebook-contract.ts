@@ -1,6 +1,6 @@
 import type { ConversationLocation, ConversationViewNode } from '@deepseek-ai/dsh-client-runtime/client'
 import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
-import type { FoldedNotebooks } from '@deepseek-ai/dsh-notebook-core/types'
+import type { FoldedNotebooks } from '@younthing/dsh-notebook-core/types'
 
 /** Notebook events projected by the browser view. */
 export type NotebookSessionEvent = SessionEvent<

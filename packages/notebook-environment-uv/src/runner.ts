@@ -6,7 +6,7 @@ import {
   NotebookEnvironmentError,
   type NotebookEnvironmentErrorCategory,
   type NotebookEnvironmentErrorCode,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import type { SandboxExecutionPolicy } from '@deepseek-ai/dsh-sandbox'
 import type { SubprocessHandle } from '@deepseek-ai/dsh-subprocess'
 

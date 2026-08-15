@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-notebook-kernel-jupyter
+# @younthing/dsh-notebook-kernel-jupyter
 
 [English](README.md) | 中文
 
@@ -26,7 +26,7 @@ Jupyter 的 `stream`、`display_data`、`execute_result`、`update_display_data`
 
 #### 模型可见内容
 
-无直接可见内容。`@deepseek-ai/dsh-tool-notebook` Consumer 负责 Tool schema 与模型可见结果文本。
+无直接可见内容。`@younthing/dsh-tool-notebook` Consumer 负责 Tool schema 与模型可见结果文本。
 
 #### Token 影响
 
@@ -40,4 +40,4 @@ Jupyter 的 `stream`、`display_data`、`execute_result`、`update_display_data`
 
 - 内核状态仍只存在于进程中。provider 负责 supervisor transport 与整个进程树的 teardown；notebook Service、tool 和 UI 暴露显式 restart，Service 会记录每次替换的 generation，并通过 reload 提供完整快照恢复。Harness 进程重启仍会丢失 live kernel state，因此调用方必须显式 restart 或 reload，才能继续依赖新内核。
 - 在 Windows `workspace-write` 模式下，沙箱会为每个 session 分配私有临时目录，但受限 token 无法替换 Jupyter 连接文件的 DACL。因此，provider 只在这个组合下启用 Jupyter Core 的 `JUPYTER_ALLOW_INSECURE_WRITES` 逃生开关；连接文件仍位于该 session 的私有临时目录内。`danger-full-access` 保留 Jupyter 的常规 DACL 改写，而 `read-only` 因没有可写临时能力而继续明确失败。supervisor 还会把内核进程的标准输入连接到 NUL；Jupyter 输入仍通过其 ZMQ channel 可用。两个进程都会保留受限 token，provider 绝不会在启动失败后改为不受约束地重试。
-- 本 provider 不安装 Python 包。所选 environment provider 必须提供兼容的 Jupyter dependencies 与其声明的 kernelspec；`@deepseek-ai/dsh-notebook-environment-uv` 会 provision 固定版本的默认 environment。
+- 本 provider 不安装 Python 包。所选 environment provider 必须提供兼容的 Jupyter dependencies 与其声明的 kernelspec；`@younthing/dsh-notebook-environment-uv` 会 provision 固定版本的默认 environment。

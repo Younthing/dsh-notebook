@@ -1,6 +1,6 @@
 /**
  * Jupyter kernel backend provider for the notebook seam.
- * @module @deepseek-ai/dsh-notebook-kernel-jupyter
+ * @module @younthing/dsh-notebook-kernel-jupyter
  */
 
 import { dirname, join } from 'node:path'
@@ -17,10 +17,10 @@ import type {
   NotebookKernelOutput,
   NotebookKernelOutputMutation,
   NotebookKernelStartSpec,
-} from '@deepseek-ai/dsh-notebook-core'
+} from '@younthing/dsh-notebook-core'
 import {
   NotebookEnvironmentError,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import type { SandboxExecutionPolicy } from '@deepseek-ai/dsh-sandbox'
 import type { SubprocessHandle } from '@deepseek-ai/dsh-subprocess'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'

@@ -1,6 +1,6 @@
 /**
  * Host-only kernel output vocabulary before durable attachment admission.
- * @module @deepseek-ai/dsh-notebook-core/kernel-output-types
+ * @module @younthing/dsh-notebook-core/kernel-output-types
  */
 
 import type {

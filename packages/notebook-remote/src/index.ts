@@ -11,13 +11,13 @@ import {
   NotebookId,
   NotebookPersistenceError,
   type NotebookService,
-} from '@deepseek-ai/dsh-notebook-core'
+} from '@younthing/dsh-notebook-core'
 import {
   NotebookEnvironmentError,
   NotebookEnvironmentId,
   type NotebookEnvironmentManager,
   type NotebookEnvironmentOperationRequest,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import {
   Session,
   SessionId,
@@ -127,7 +127,7 @@ export class NotebookRemoteService extends TypertRemoteService {
   private notebooksFor(agent?: Agent): NotebookRemoteResult<NotebookService> {
     return configured(
       agent?.ctx.get('notebooks') ?? this.ctx.get('notebooks'),
-      'notebook service is absent: load @deepseek-ai/dsh-notebook-core',
+      'notebook service is absent: load @younthing/dsh-notebook-core',
     )
   }
 
@@ -162,7 +162,7 @@ export class NotebookRemoteService extends TypertRemoteService {
   private environmentsFor(agent?: Agent): NotebookRemoteResult<NotebookEnvironmentManager> {
     return configured(
       agent?.ctx.get('notebookEnvironments') ?? this.ctx.get('notebookEnvironments'),
-      'notebook environment service is absent: load @deepseek-ai/dsh-notebook-environment',
+      'notebook environment service is absent: load @younthing/dsh-notebook-environment',
     )
   }
 
@@ -472,14 +472,16 @@ export class NotebookRemoteService extends TypertRemoteService {
     )
   }
 
-  /** Read one verified raster referenced by Notebook-owned durable events. */
+  /** Read one verified raster referenced by a document open in this process. */
   @Remote
   async readAttachment(
     request: NotebookReadAttachmentRequest,
     signal: AbortSignal,
   ): Promise<NotebookRemoteResult<NotebookReadAttachmentAck>> {
-    const access = await this.sessionFor(SessionId(request.sessionId), signal)
+    const access = await this.agentFor(request.sessionId)
     if (!access.ok) return access
+    const notebooks = this.notebooksFor(access.value)
+    if (!notebooks.ok) return notebooks
     const attachments = this.ctx.get('attachments')
     if (attachments === undefined) {
       return failure({
@@ -488,12 +490,12 @@ export class NotebookRemoteService extends TypertRemoteService {
         message: 'attachment storage is absent: load @deepseek-ai/dsh-attachment',
       })
     }
-    const ref = findNotebookImage(access.value.session.events, request.attachmentId)
+    const ref = findNotebookImage(notebooks.value.list(access.value.session), request.attachmentId)
     if (ref === undefined) {
       return failure({
         source: 'attachment',
         code: 'ATTACHMENT_NOT_REFERENCED',
-        message: 'image is not referenced by this session\'s Notebook events',
+        message: 'image is not referenced by a Notebook open in this process',
       })
     }
     try {
@@ -519,14 +521,14 @@ export class NotebookRemoteService extends TypertRemoteService {
     const notebooks = this.notebooksFor(agent)
     if (!notebooks.ok) return notebooks
     return await this.execute(async () => {
-      await notebooks.value.editCell(
+      const document = await notebooks.value.editCell(
         agent.session,
         NotebookId(request.notebookId),
         CellId(request.cellId),
         request.source,
         signal,
       )
-      return { ok: true as const }
+      return { document }
     }, signal)
   }
 
@@ -554,7 +556,7 @@ export class NotebookRemoteService extends TypertRemoteService {
       )
       const inserted = document.cells.find(cell => !before.has(cell.id))
       if (inserted === undefined) throw new Error('inserted notebook cell is missing after append')
-      return { cellId: inserted.id }
+      return { cellId: inserted.id, document }
     }, signal)
   }
 
@@ -582,6 +584,7 @@ export class NotebookRemoteService extends TypertRemoteService {
         status: result.status,
         executionCount: result.executionCount,
         ...result.error === undefined ? {} : { error: result.error },
+        document: notebooks.value.get(agent.session, notebookId),
       }
     }, signal)
   }
@@ -608,6 +611,7 @@ export class NotebookRemoteService extends TypertRemoteService {
         backend: kernel.backend,
         ...kernel.kernelName === undefined ? {} : { kernelName: kernel.kernelName },
         generation: kernel.generation,
+        document,
       }
     }, signal)
   }
@@ -626,7 +630,7 @@ export class NotebookRemoteService extends TypertRemoteService {
         NotebookId(request.notebookId),
         { initiator: 'user', signal },
       )
-      return { fileVersion: document.fileVersion }
+      return { fileVersion: document.fileVersion, document }
     }, signal)
   }
 

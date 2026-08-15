@@ -1,12 +1,12 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-notebook-kernel-jupyter`.
- * @module @deepseek-ai/dsh-notebook-kernel-jupyter/invariant
+ * Package-owned invariant companion for `@younthing/dsh-notebook-kernel-jupyter`.
+ * @module @younthing/dsh-notebook-kernel-jupyter/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-notebook-kernel-jupyter'
+const PACKAGE_NAME = '@younthing/dsh-notebook-kernel-jupyter'
 
 /** Cordis companion plugin name. */
 export const name = 'notebook-kernel-jupyter-invariant'
@@ -16,7 +16,7 @@ export const inject = ['invariants']
 /**
  * No runtime invariant: the provider owns only private supervisor handles registered
  * through the notebook backend registry, and durable notebook state lives in the
- * owning session log validated by `@deepseek-ai/dsh-notebook-core`.
+ * owning session log validated by `@younthing/dsh-notebook-core`.
  */
 const install: InvariantInstaller = () => {}
 

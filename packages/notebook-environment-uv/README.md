@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-notebook-environment-uv
+# @younthing/dsh-notebook-environment-uv
 
 English | [中文](README.zh.md)
 
@@ -20,7 +20,7 @@ Every operation has a configurable 15-minute default deadline. Provider subproce
 
 #### What the model sees
 
-Nothing directly. The `@deepseek-ai/dsh-tool-notebook` Consumer owns any model-visible setup guidance.
+Nothing directly. The `@younthing/dsh-tool-notebook` Consumer owns any model-visible setup guidance.
 
 #### Token effect
 

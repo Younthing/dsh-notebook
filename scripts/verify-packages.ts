@@ -36,7 +36,7 @@ for (const directory of packageDirectories) {
   if (manifest.private === true) throw new Error(`${manifest.name}: publishable package is private`)
   if (manifest.license !== 'MIT') throw new Error(`${manifest.name}: license must be MIT`)
   if (manifest.publishConfig?.access !== 'public') throw new Error(`${manifest.name}: publishConfig.access must be public`)
-  if (manifest.repository?.url !== 'git+https://github.com/deepseek-ai/dsh-notebook.git') {
+  if (manifest.repository?.url !== 'git+https://github.com/Younthing/dsh-notebook.git') {
     throw new Error(`${manifest.name}: repository URL does not point to dsh-notebook`)
   }
   if (manifest.repository.directory !== `packages/${directory}`) {
@@ -44,7 +44,7 @@ for (const directory of packageDirectories) {
   }
   version ??= manifest.version
   if (manifest.version !== version) throw new Error(`${manifest.name}: version differs from ${version}`)
-  if (manifest.name === '@deepseek-ai/dsh-notebook') {
+  if (manifest.name === '@younthing/dsh-notebook') {
     if (manifest.dsh?.bundle?.patch !== './cordis.patch.yml') {
       throw new Error(`${manifest.name}: install bundle declaration is missing`)
     }
@@ -63,7 +63,7 @@ for (const directory of packageDirectories) {
   for (const required of ['package.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md']) {
     if (!files.has(required)) throw new Error(`${manifest.name}: tarball omits ${required}`)
   }
-  if (manifest.name === '@deepseek-ai/dsh-notebook' && !files.has('cordis.patch.yml')) {
+  if (manifest.name === '@younthing/dsh-notebook' && !files.has('cordis.patch.yml')) {
     throw new Error(`${manifest.name}: tarball omits cordis.patch.yml`)
   }
 }

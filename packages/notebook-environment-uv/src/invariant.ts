@@ -1,9 +1,9 @@
-/** Package-owned invariant companion for `@deepseek-ai/dsh-notebook-environment-uv`. */
+/** Package-owned invariant companion for `@younthing/dsh-notebook-environment-uv`. */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-notebook-environment-uv'
+const PACKAGE_NAME = '@younthing/dsh-notebook-environment-uv'
 
 /** Cordis companion plugin name. */
 export const name = 'notebook-environment-uv-invariant'

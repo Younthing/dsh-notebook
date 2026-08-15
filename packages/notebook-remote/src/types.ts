@@ -161,6 +161,7 @@ export interface NotebookKernelAck {
   readonly backend: string
   readonly kernelName?: string
   readonly generation: number
+  readonly document: NotebookDocument
 }
 
 /** Acknowledgement after a user-initiated cell run. */
@@ -169,11 +170,13 @@ export interface NotebookRunAck {
   readonly status: 'ok' | 'error' | 'cancelled'
   readonly executionCount: number | null
   readonly error?: string
+  readonly document: NotebookDocument
 }
 
 /** Acknowledgement after accepting an external file revision. */
 export interface NotebookReloadAck {
   readonly fileVersion: NotebookFileVersion
+  readonly document: NotebookDocument
 }
 
 /** Cold-session notebook discovery input. */
@@ -281,12 +284,13 @@ export interface NotebookReadAttachmentAck {
 
 /** Successful cell edit acknowledgement. */
 export interface NotebookEditCellAck {
-  readonly ok: true
+  readonly document: NotebookDocument
 }
 
 /** Successful cell insertion acknowledgement. */
 export interface NotebookInsertCellAck {
   readonly cellId: CellId
+  readonly document: NotebookDocument
 }
 
 /** Kernel interruption acknowledgement. */

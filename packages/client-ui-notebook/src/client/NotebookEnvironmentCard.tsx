@@ -3,7 +3,7 @@ import type {
   NotebookEnvironmentCatalog,
   NotebookEnvironmentErrorCategory,
   NotebookEnvironmentId,
-} from '@deepseek-ai/dsh-notebook-environment/types'
+} from '@younthing/dsh-notebook-environment/types'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { Button, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import css from './notebook.module.css'

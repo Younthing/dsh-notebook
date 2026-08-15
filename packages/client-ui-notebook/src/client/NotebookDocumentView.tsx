@@ -5,7 +5,7 @@ import type {
   NotebookCellStatus,
   NotebookDocument,
   NotebookKernelRuntimeStatus,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   Button, IconCheckOutline14, IconTriangleRightFill14, StateDot,

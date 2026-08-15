@@ -326,7 +326,7 @@
     },
     {
       "name": "notebook_read",
-      "description": "Read one session-local notebook document reconstructed from the session log.",
+      "description": "Read one notebook document opened in the current plugin process.",
       "parameters": {
         "type": "object",
         "properties": {

@@ -1,6 +1,6 @@
 /**
  * Atomic `.ipynb` workspace loading, guarded creation, and versioned replacement.
- * @module @deepseek-ai/dsh-notebook-core/persistence
+ * @module @younthing/dsh-notebook-core/persistence
  */
 
 import { FsError } from '@deepseek-ai/dsh-fs'

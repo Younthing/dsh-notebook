@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import NotebookService, { MemoryKernelBackend } from '@deepseek-ai/dsh-notebook-core'
-import { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment'
+import NotebookService, { MemoryKernelBackend } from '@younthing/dsh-notebook-core'
+import { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment'
 import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
 import { TestAttachmentStore, TestFileSystem } from './helpers.ts'
 
@@ -87,7 +87,7 @@ describe('NotebookService with MemoryKernelBackend', () => {
     await ctx.fiber.dispose()
   })
 
-  it('opens, edits, executes, and appends notebook events', async () => {
+  it('opens, edits, and executes without appending Harness session events', async () => {
     const ctx = await memoryContext()
     const session = Session.create(SessionId('agent-notebook'))
     const opened = await ctx.notebooks.create(session, 'demo.ipynb')
@@ -107,16 +107,8 @@ describe('NotebookService with MemoryKernelBackend', () => {
     expect(result.status).toBe('ok')
     expect(result.outputs.some(output => output.type === 'stream' && output.text.includes('42'))).toBe(true)
 
-    const types = session.events.map(event => event.type)
-    expect(types).toEqual([
-      'notebook/open',
-      'notebook/cell',
-      'notebook/kernel',
-      'notebook/cell',
-      'notebook/execute',
-      'notebook/output',
-      'notebook/execute-end',
-    ])
+    expect(session.events).toEqual([])
+    expect(ctx.notebooks.get(session, opened.id).cells[0]?.executionCount).toBe(1)
     expect(await ctx.notebooks.inspect(session, opened.id, 'x', { initiator: 'agent' })).toContain('41')
     await ctx.fiber.dispose()
   })

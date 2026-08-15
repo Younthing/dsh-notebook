@@ -1,6 +1,6 @@
 /**
  * Browser-safe durable notebook output vocabulary.
- * @module @deepseek-ai/dsh-notebook-core/output-types
+ * @module @younthing/dsh-notebook-core/output-types
  */
 
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'

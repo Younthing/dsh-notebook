@@ -18,8 +18,8 @@ import type {
   ExecutionId as NotebookExecutionId,
   NotebookFileVersion,
   NotebookId as NotebookDocumentId,
-} from '@deepseek-ai/dsh-notebook-core/types'
-import type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+} from '@younthing/dsh-notebook-core/types'
+import type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 import { Session, SessionId as HostSessionId } from '@deepseek-ai/dsh-session'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { apply, inject } from '../src/client/index.ts'
@@ -365,15 +365,14 @@ async function bench(notebooks?: {
   await ctx.plugin(ConversationViewRegistry).await()
   ctx.provide('sessions', { binding: () => ({ session }) })
   const replaceSession = vi.fn(replacement ?? (async () => {}))
-  ctx.provide('workspaces', { replaceSession })
+  ctx.provide('workspaces', { archiveSession: replaceSession })
   ctx.provide('layout', {
-    toggleCompanion: vi.fn(),
-    openCompanion: vi.fn(),
-    closeCompanion: vi.fn(),
+    openDetails: vi.fn(),
+    closeDetails: vi.fn(),
   })
   slots.register({
     name: 'root',
-    children: { companion: { kind: 'single', scope: 'session' } },
+    children: { details: { kind: 'single', scope: 'session' } },
   } as never, () => null)
   const api = {
     notebooks: {
@@ -432,6 +431,11 @@ async function bench(notebooks?: {
     $on: () => () => {},
   } as never)
   ctx.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
+  // The rc.6 locale plugin declares `connection` and `remote` in its inject
+  // list (the bundle's apply never reads them) — the bench provides `remote`
+  // below, and this dummy satisfies the remaining declared dependency so the
+  // real locale service mounts and `ctx.locale` becomes available.
+  ctx.provide('connection', {} as never)
   ctx.plugin({ inject: [...localeInject], apply: localeApply })
   const fiber = ctx.plugin({ inject: [...inject], apply })
   await fiber.await()
@@ -439,7 +443,7 @@ async function bench(notebooks?: {
 }
 
 function notebookInject(slots: SlotRegistry): (sessionId: SessionId) => NotebookViewInjected {
-  const injectEntry = slots.entries('companion')[0]?.inject
+  const injectEntry = slots.entries('details')[0]?.inject
   if (injectEntry === undefined) throw new Error('notebook test slot injection is missing')
   return injectEntry as unknown as (sessionId: SessionId) => NotebookViewInjected
 }
@@ -453,11 +457,11 @@ describe('NotebookView', () => {
 
   it('registers the notebook column and fiber disposal removes it', async () => {
     const { ctx, slots, fiber } = await bench()
-    expect(slots.entries('companion')).toHaveLength(1)
+    expect(slots.entries('details')).toHaveLength(1)
     expect(ctx.conversationEvents.entries().some(entry => entry.kind === 'notebook-event')).toBe(true)
     expect(ctx.conversationViews.entries().some(entry => entry.target === 'notebook')).toBe(true)
     await fiber.dispose()
-    expect(slots.entries('companion')).toHaveLength(0)
+    expect(slots.entries('details')).toHaveLength(0)
     expect(ctx.conversationEvents.entries().some(entry => entry.kind === 'notebook-event')).toBe(false)
     expect(ctx.conversationViews.entries().some(entry => entry.target === 'notebook')).toBe(false)
   })
@@ -1255,7 +1259,7 @@ describe('NotebookView', () => {
     })
     const verbs = notebookInject(slots)(SID)
     await expect(verbs.runCell(NotebookId('n'), CellId('c'), 'while True: pass'))
-      .resolves.toBe('cancelled')
+      .resolves.toMatchObject({ status: 'cancelled' })
   })
 })
 

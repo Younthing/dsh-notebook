@@ -9,8 +9,8 @@ import { Context } from '@deepseek-ai/cordis'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import z from '@deepseek-ai/schemastery'
-import { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment'
-import UvNotebookEnvironmentManager from '@deepseek-ai/dsh-notebook-environment-uv'
+import { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment'
+import UvNotebookEnvironmentManager from '@younthing/dsh-notebook-environment-uv'
 import SandboxProvider, {
   type ConfinedArgv,
   type SandboxPolicy,
@@ -191,7 +191,7 @@ async function setupLoader(options: SetupOptions = {}): Promise<SetupResult> {
     '  config:',
     `    uvExecutable: ${JSON.stringify(uvExecutable)}`,
     `    pythonExecutable: ${JSON.stringify(pythonExecutable)}`,
-    "- name: '@deepseek-ai/dsh-notebook-environment-uv'",
+    "- name: '@younthing/dsh-notebook-environment-uv'",
     '  config:',
   ]
   if (options.minimalProviderConfig === true) {
@@ -216,7 +216,7 @@ async function setupLoader(options: SetupOptions = {}): Promise<SetupResult> {
   const modules = new Map<string, unknown>([
     ['fixture:sandbox', FixtureSandbox],
     ['fixture:subprocess', FixtureSubprocess],
-    ['@deepseek-ai/dsh-notebook-environment-uv', UvNotebookEnvironmentManager],
+    ['@younthing/dsh-notebook-environment-uv', UvNotebookEnvironmentManager],
   ])
   ctx.loader.internal = {
     version: 'v2',

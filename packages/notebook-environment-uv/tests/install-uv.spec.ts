@@ -52,7 +52,7 @@ vi.mock('../src/archive.ts', () => {
 
 const {
   default: UvNotebookEnvironmentManager,
-} = await import('@deepseek-ai/dsh-notebook-environment-uv')
+} = await import('@younthing/dsh-notebook-environment-uv')
 const {
   currentUvArchive,
   privateUvExecutable,

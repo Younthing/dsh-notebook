@@ -14,20 +14,20 @@ Status: implemented
 
 ## Decision
 
-Notebook 是完整、独立安装的能力 seam：包含 workspace 支持的文档、独立的 Python 环境能力、可替换 kernel 提供方、Host、模型与浏览器消费方，以及持久会话事件。它不修改 agent loop。
+Notebook 是完整、独立安装的能力：包含 workspace 支持的文档、独立的 Python 环境能力、可替换 kernel 提供方，以及 Host、模型与浏览器消费方。rc.6 版本把文档投影保留在进程内，并以 `.ipynb` 文件作为持久化事实来源。它不修改 agent loop。
 
 ### 包所有权
 
 | 包 | 角色与所有权 |
 |---|---|
-| `@deepseek-ai/dsh-notebook` | 可安装 bundle；通过一个 profile patch 激活完整能力 |
-| `@deepseek-ai/dsh-notebook-core` | Service Definition；通过 `ctx.notebooks` 拥有发现、文档、文件事务、会话事件、kernel 注册、串行化与拆卸 |
-| `@deepseek-ai/dsh-notebook-environment` | Service Definition；通过 `ctx.notebookEnvironments` 拥有浏览器安全环境目录、不透明环境 id、配置操作、类型化失败与可信启动解析 |
-| `@deepseek-ai/dsh-notebook-environment-uv` | 提供方；拥有私有 uv 安装、Python 发现与安装、workspace `.venv` 配置、所有权恢复与解释器启动解析 |
-| `@deepseek-ai/dsh-notebook-kernel-jupyter` | 提供方；通过受管 subprocess 与 sandbox 服务，从已解析环境启动 `jupyter_client` |
-| `@deepseek-ai/dsh-tool-notebook` | 模型消费方；注册九个文档与执行工具，以及有界的人发起执行 inject |
-| `@deepseek-ai/dsh-notebook-remote` | Host 消费方；推导可信 workspace 与权限策略，并暴露 `notebooks` Typert Remote namespace |
-| `@deepseek-ai/dsh-client-ui-notebook` | 浏览器消费方；拥有文档选择、编辑、执行控制、环境设置与丰富输出渲染 |
+| `@younthing/dsh-notebook` | 可安装 bundle；通过一个 profile patch 激活完整能力 |
+| `@younthing/dsh-notebook-core` | Service Definition；通过 `ctx.notebooks` 拥有发现、文档、文件事务、进程内投影、kernel 注册、串行化与拆卸 |
+| `@younthing/dsh-notebook-environment` | Service Definition；通过 `ctx.notebookEnvironments` 拥有浏览器安全环境目录、不透明环境 id、配置操作、类型化失败与可信启动解析 |
+| `@younthing/dsh-notebook-environment-uv` | 提供方；拥有私有 uv 安装、Python 发现与安装、workspace `.venv` 配置、所有权恢复与解释器启动解析 |
+| `@younthing/dsh-notebook-kernel-jupyter` | 提供方；通过受管 subprocess 与 sandbox 服务，从已解析环境启动 `jupyter_client` |
+| `@younthing/dsh-tool-notebook` | 模型消费方；注册九个文档与执行工具，以及有界的人发起执行 inject |
+| `@younthing/dsh-notebook-remote` | Host 消费方；推导可信 workspace 与权限策略，并暴露 `notebooks` Typert Remote namespace |
+| `@younthing/dsh-client-ui-notebook` | 浏览器消费方；拥有文档选择、编辑、执行控制、环境设置与丰富输出渲染 |
 
 提供方与消费方都依赖自身的 Service Definition，彼此互不依赖。浏览器安全类型导出包含不透明 id、持久值、目录条目与类型化错误详情；不暴露 Cordis 服务、绝对解释器路径、kernelspec 资源目录、可执行参数或 Host 实现类型。
 
@@ -37,11 +37,11 @@ Notebook 是完整、独立安装的能力 seam：包含 workspace 支持的文�
 
 Service Definition 通过有界 `ctx.fs` 遍历发现 workspace 相对 `.ipynb` 路径，不读取文件内容。规范目标去重、containment 检查、排除目录名、深度和结果限制、稳定分页、过期 cursor 拒绝、取消与 partial 结果约束 symlink 和大型目录树。Host 从 Session header 推导扫描根，不会只为发现文件而恢复 Agent。
 
-同一个精确 Session 实例内的规范文件系统目标会合并；不同 Session 保留独立 kernel 状态，并通过文件版本竞争。Cell 编辑、稳定锚点插入与执行结果都会先通过 compare-and-swap 替换文件，之后才发布会话事件后缀。外部编辑产生类型化 `WRITE_CONFLICT`，且不发布变更事件。
+同一个精确 Session 实例内的规范文件系统目标会合并；不同 Session 保留独立 kernel 状态，并通过文件版本竞争。Cell 编辑、稳定锚点插入与执行结果都会先通过 compare-and-swap 替换文件，之后才更新插件内投影。外部编辑产生类型化 `WRITE_CONFLICT`，且保持投影不变。
 
 `reload()` 接受一个稳定的外部修订版，并发布完整 `notebook/reload` 快照。它保留已选环境，退役旧的进程内 kernel，但不启动替换项。下一次执行或检查可以恢复该已选环境。Reload 是整份文档接纳，不是合并。
 
-### Kernel 选择持久，进程可丢弃
+### Kernel 选择与句柄仅在进程内保留
 
 首次成功显式 attach 前，`NotebookDocument.kernel` 不存在。其持久值包含不透明环境 id、已注册 backend、可选 kernelspec 名称与 generation。成功 attach、restart 与 recovery 都发布同一种 `notebook/kernel` 事件，并恰好推进一次 generation。预发布 log 会拒绝已取代的 `notebook/restart` 格式，而不保留兼容层。
 
@@ -67,7 +67,7 @@ uv 提供方依次解析配置的 uv 可执行文件、scrubbed PATH 上的兼�
 
 插件自有 Typert Remote 分离文档发现、严格 open 与 create、环境目录、显式 uv 与 Python 安装、provision、attach 与运行时状态。环境失败携带稳定的 manager、Python、permission、dependency、kernelspec 或 kernel-start 详情；有界 stderr 留在 Host 诊断中，不进入普通浏览器消息。
 
-浏览器先解析 history，之后才开始发现。Launcher 显示零个、一个或多个候选，不会自动打开唯一结果；显式 New 与按路径 Open 动作始终可用；后续页面失败时保留先前结果。已打开文档使用可键盘操作的选择器与单一 active canvas。用户打开的文档成为 active；Agent 打开的文档会提示但不抢焦点。Draft、busy、error、kernel 与滚动状态按文档隔离。
+浏览器等待 Session 打开后再开始发现。Launcher 显示零个、一个或多个候选，不会自动打开唯一结果；显式 New 与按路径 Open 动作始终可用；后续页面失败时保留先前结果。已打开文档使用可键盘操作的选择器与单一 active canvas。Draft、busy、error、kernel 与滚动状态会在当前进程中按文档隔离。
 
 环境缺失设置原位显示，不会覆盖文档内容。Detached 时 Run、Run all、Inspect 与 Restart 保持禁用。环境卡只暴露上述授权确认，并在环境 ready 后自动 attach；由 Run 触发的设置会续办原 Run。Header action 可以恢复因响应式布局隐藏的 Notebook 列。
 
@@ -75,7 +75,7 @@ uv 提供方依次解析配置的 uv 可执行文件、scrubbed PATH 上的兼�
 
 ### 组合
 
-把 `@deepseek-ai/dsh-notebook` 安装进 profile 后，会挂载 Service Definition、uv 环境提供方、Jupyter 提供方、插件自有 Remote、模型消费方与浏览器 companion。安装是显式的 profile 级 opt-in，因此九个模型工具会对该 profile 的所有 Agent preset 可用，包括 `minimal`。缺失 uv、Python 或 `.venv` 组件是带显式恢复动作的运行时目录状态，不会让应用 boot 或文档访问静默缺功能。
+把 `@younthing/dsh-notebook` 安装进 profile 后，会挂载 Service Definition、uv 环境提供方、Jupyter 提供方、插件自有 Remote、模型消费方与浏览器 companion。安装是显式的 profile 级 opt-in，因此九个模型工具会对该 profile 的所有 Agent preset 可用，包括 `minimal`。缺失 uv、Python 或 `.venv` 组件是带显式恢复动作的运行时目录状态，不会让应用 boot 或文档访问静默缺功能。
 
 ## Consequences
 

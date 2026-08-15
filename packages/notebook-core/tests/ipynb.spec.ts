@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CellId } from '@deepseek-ai/dsh-notebook-core'
+import { CellId } from '@younthing/dsh-notebook-core'
 import {
   createIpynb,
   insertIpynbCell,

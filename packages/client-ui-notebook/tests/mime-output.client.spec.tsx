@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import type { NotebookMimeBundle, NotebookOutput } from '@deepseek-ai/dsh-notebook-core/types'
+import type { NotebookMimeBundle, NotebookOutput } from '@younthing/dsh-notebook-core/types'
 import {
   MimeOutput, NotebookMarkdown,
 } from '../src/client/MimeOutput.tsx'

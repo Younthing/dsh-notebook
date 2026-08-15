@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-notebook-workspace",
+  "name": "@younthing/dsh-notebook-workspace",
   "version": "0.1.0-rc.1",
   "private": true,
   "type": "module",
@@ -9,14 +9,14 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "build": "pnpm run build:types && tsdown && pnpm --filter @deepseek-ai/dsh-client-ui-notebook run bundle",
+    "build": "pnpm run build:types && tsdown && pnpm --filter @younthing/dsh-client-ui-notebook run bundle",
     "build:types": "tsc -b tsconfig.host.json && tsc -b tsconfig.client.json",
     "clean": "rimraf coverage packages/*/lib",
     "typecheck": "tsc -b tsconfig.host.json tsconfig.client.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "oxlint .",
-    "publint": "pnpm -r --if-present exec publint",
+    "publint": "pnpm -r exec publint",
     "pack:verify": "tsx scripts/verify-packages.ts",
     "check": "pnpm run typecheck && pnpm run test:coverage && pnpm run lint && pnpm run build && pnpm run publint && pnpm run pack:verify"
   },
@@ -38,5 +38,21 @@
     "typescript": "^6.0.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.8"
-  }
+  },
+  "description": "[English](README.md) | 中文",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Younthing/dsh-notebook.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/Younthing/dsh-notebook/issues"
+  },
+  "homepage": "https://github.com/Younthing/dsh-notebook#readme"
 }

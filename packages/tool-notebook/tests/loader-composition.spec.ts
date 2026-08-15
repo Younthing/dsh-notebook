@@ -14,9 +14,9 @@ import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
-import NotebookService, { NotebookId } from '@deepseek-ai/dsh-notebook-core'
-import { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment'
-import * as toolNotebook from '@deepseek-ai/dsh-tool-notebook'
+import NotebookService, { NotebookId } from '@younthing/dsh-notebook-core'
+import { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment'
+import * as toolNotebook from '@younthing/dsh-tool-notebook'
 import * as memoryBackend from './fixtures/memory-backend-plugin.ts'
 import { toolRunContext } from './tool-run-context.ts'
 
@@ -61,9 +61,9 @@ describe('tool-notebook through a real Loader composition', () => {
       '  config:',
       '    mode: danger-full-access',
       `    workspaceRoot: '${portableRoot}'`,
-      "- name: '@deepseek-ai/dsh-notebook-core'",
+      "- name: '@younthing/dsh-notebook-core'",
       "- name: './memory-backend-plugin.ts'",
-      "- name: '@deepseek-ai/dsh-tool-notebook'",
+      "- name: '@younthing/dsh-tool-notebook'",
       '',
     ].join('\n'))
 
@@ -79,8 +79,8 @@ describe('tool-notebook through a real Loader composition', () => {
       ['@deepseek-ai/dsh-attachment-local', LocalAttachmentStore],
       ['@deepseek-ai/dsh-fs-local', LocalFileSystem],
       ['@deepseek-ai/dsh-sandbox-policy', SandboxPolicyService],
-      ['@deepseek-ai/dsh-notebook-core', NotebookService],
-      ['@deepseek-ai/dsh-tool-notebook', toolNotebook],
+      ['@younthing/dsh-notebook-core', NotebookService],
+      ['@younthing/dsh-tool-notebook', toolNotebook],
     ])
     context.loader.internal = {
       version: 'v2',
@@ -198,9 +198,8 @@ describe('tool-notebook through a real Loader composition', () => {
     }])
     await restartTool.execute({ notebookId }, toolRunContext(agent))
 
-    expect(session.events.some(event => event.type.startsWith('notebook/'))).toBe(true)
-    expect(session.events.filter(event => event.type === 'notebook/kernel')).toHaveLength(2)
-    expect(session.events.some(event => event.type === 'notebook/reload')).toBe(true)
+    expect(session.events.some(event => event.type.startsWith('notebook/'))).toBe(false)
+    expect(context.notebooks.get(session, notebookId).kernel?.generation).toBe(2)
     expect(inject).toHaveBeenCalledOnce()
     expect(JSON.stringify(inject.mock.calls[0]?.[0])).toContain('7')
     const persisted = JSON.parse(await readFile(join(root, 'demo.ipynb'), 'utf8')) as {

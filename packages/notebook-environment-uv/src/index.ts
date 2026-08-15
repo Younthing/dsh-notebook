@@ -2,7 +2,7 @@
  * uv-backed notebook environment provider. It discovers configured, PATH, then pinned private uv;
  * provisions one relocatable workspace `.venv`; and resolves opaque environment ids for Jupyter.
  *
- * @module @deepseek-ai/dsh-notebook-environment-uv
+ * @module @younthing/dsh-notebook-environment-uv
  */
 
 import { createHash, randomUUID } from 'node:crypto'
@@ -39,7 +39,7 @@ import {
   type NotebookPythonCatalogEntry,
   type NotebookPythonInstallRequest,
   type NotebookPythonSource,
-} from '@deepseek-ai/dsh-notebook-environment'
+} from '@younthing/dsh-notebook-environment'
 import type { SandboxExecutionPolicy } from '@deepseek-ai/dsh-sandbox'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
 import {

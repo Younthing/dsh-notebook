@@ -1,7 +1,7 @@
-/** Notebook-owned authorization for raster references in durable events. */
+/** Notebook-owned authorization for raster references in open documents. */
 
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { NotebookDocument } from '@younthing/dsh-notebook-core'
 
 function imageInBundle(value: unknown, attachmentId: string): ImageAttachmentRef | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined
@@ -40,35 +40,16 @@ function imageInCell(value: unknown, attachmentId: string): ImageAttachmentRef |
   return undefined
 }
 
-function imageInEvent(event: SessionEvent, attachmentId: string): ImageAttachmentRef | undefined {
-  if (event.type === 'notebook/output') {
-    const mutation = (event.data as { mutation?: unknown }).mutation
-    if (typeof mutation !== 'object' || mutation === null || Array.isArray(mutation)) return undefined
-    const candidate = mutation as { operation?: unknown; output?: unknown; data?: unknown }
-    if (candidate.operation === 'append') return imageInOutput(candidate.output, attachmentId)
-    if (candidate.operation === 'update-display') return imageInBundle(candidate.data, attachmentId)
-    return undefined
-  }
-  if (event.type === 'notebook/cell') return imageInCell(event.data, attachmentId)
-  if (event.type === 'notebook/reload') {
-    const cells = (event.data as { cells?: unknown }).cells
-    if (!Array.isArray(cells)) return undefined
-    for (const cell of cells) {
+/** Resolve one raster reference only from documents opened by this plugin process. */
+export function findNotebookImage(
+  documents: readonly NotebookDocument[],
+  attachmentId: string,
+): ImageAttachmentRef | undefined {
+  for (const document of documents) {
+    for (const cell of document.cells) {
       const found = imageInCell(cell, attachmentId)
       if (found !== undefined) return found
     }
-  }
-  return undefined
-}
-
-/** Resolve one raster reference only from Notebook-owned durable event fields. */
-export function findNotebookImage(
-  events: readonly SessionEvent[],
-  attachmentId: string,
-): ImageAttachmentRef | undefined {
-  for (const event of events) {
-    const found = imageInEvent(event, attachmentId)
-    if (found !== undefined) return found
   }
   return undefined
 }

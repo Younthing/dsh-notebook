@@ -1,6 +1,6 @@
-/** Shared Notebook MIME value conversions. @module @deepseek-ai/dsh-tool-notebook/mime */
+/** Shared Notebook MIME value conversions. @module @younthing/dsh-tool-notebook/mime */
 
-import type { NotebookMimeValue } from '@deepseek-ai/dsh-notebook-core/types'
+import type { NotebookMimeValue } from '@younthing/dsh-notebook-core/types'
 
 type NotebookImageAttachment = Extract<NotebookMimeValue, { readonly type: 'image' }>['attachment']
 type NotebookImageAttachmentJson = Readonly<{

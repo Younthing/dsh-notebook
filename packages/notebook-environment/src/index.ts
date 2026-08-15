@@ -3,7 +3,7 @@
  * Providers own manager and interpreter mechanics; Consumers own sessions, durable selection,
  * browser transport, and kernel lifecycle.
  *
- * @module @deepseek-ai/dsh-notebook-environment
+ * @module @younthing/dsh-notebook-environment
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'

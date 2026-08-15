@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-notebook-environment
+# @younthing/dsh-notebook-environment
 
 English | [中文](README.zh.md)
 
@@ -14,7 +14,7 @@ Failures use `NotebookEnvironmentError` and the stable `NotebookEnvironmentError
 
 #### What the model sees
 
-Nothing directly. The `@deepseek-ai/dsh-tool-notebook` Consumer owns any model-visible environment guidance.
+Nothing directly. The `@younthing/dsh-tool-notebook` Consumer owns any model-visible environment guidance.
 
 #### Token effect
 

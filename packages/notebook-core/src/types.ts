@@ -1,10 +1,10 @@
 /**
  * Browser-safe notebook documents and durable session-event types.
- * @module @deepseek-ai/dsh-notebook-core/types
+ * @module @younthing/dsh-notebook-core/types
  */
 
 import type {} from '@deepseek-ai/dsh-session/types'
-import type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+import type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 import type { CellId, ExecutionId, NotebookFileVersion, NotebookId } from './brand.ts'
 import type {
   NotebookCellAttachments,
@@ -14,7 +14,7 @@ import type {
 } from './output-types.ts'
 
 export type { CellId, ExecutionId, NotebookFileVersion, NotebookId } from './brand.ts'
-export type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+export type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 export type {
   NotebookAppendOutputMutation,
   NotebookBase64MimeValue,
@@ -157,7 +157,7 @@ export interface NotebookCellSnapshot {
   readonly executionCount?: number
 }
 
-/** Workspace-backed notebook document reconstructed from the session log. */
+/** Workspace-backed notebook document retained in the plugin process. */
 export interface NotebookDocument {
   /** Registry-minted notebook identity. */
   readonly id: NotebookId

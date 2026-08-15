@@ -4,7 +4,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { MemoryKernelBackend } from '@deepseek-ai/dsh-notebook-core'
+import { MemoryKernelBackend } from '@younthing/dsh-notebook-core'
 
 /** Cordis plugin name. */
 export const name = 'test-notebook-memory-backend'

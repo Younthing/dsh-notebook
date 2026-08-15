@@ -6,7 +6,7 @@ import type {
   NotebookJsonValue,
   NotebookMimeBundle,
   NotebookOutput,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 
 const TRUNCATION_MARKER = '\n[notebook output truncated]'
 const textEncoder = new TextEncoder()

@@ -1,11 +1,11 @@
 /**
  * Host-only notebook kernel provider protocol.
- * @module @deepseek-ai/dsh-notebook-core/kernel-types
+ * @module @younthing/dsh-notebook-core/kernel-types
  */
 
 import type { SandboxExecutionPolicy } from '@deepseek-ai/dsh-sandbox'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+import type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 import type { NotebookId } from './brand.ts'
 import type { NotebookKernelOutputMutation } from './kernel-output-types.ts'
 

@@ -14,38 +14,38 @@ Embedding JupyterLab would split plugin composition, permissions, session identi
 
 ## Decision
 
-Notebook is a complete, independently installed capability seam with workspace-backed documents, a separate Python-environment capability, a replaceable kernel Provider, Host, model, and browser Consumers, and durable session events. It does not modify the agent loop.
+Notebook is a complete, independently installed capability with workspace-backed documents, a separate Python-environment capability, a replaceable kernel Provider, and Host, model, and browser Consumers. The rc.6 release keeps document projections process-local and treats `.ipynb` files as durable truth. It does not modify the agent loop.
 
 ### Package ownership
 
 | Package | Role and ownership |
 |---|---|
-| `@deepseek-ai/dsh-notebook` | Installable bundle that activates the complete capability through one profile patch |
-| `@deepseek-ai/dsh-notebook-core` | Service Definition for discovery, documents, file transactions, session events, kernel registration, serialization, and teardown through `ctx.notebooks` |
-| `@deepseek-ai/dsh-notebook-environment` | Service Definition for browser-safe environment catalogs, opaque environment ids, provisioning operations, typed failures, and trusted launch resolution through `ctx.notebookEnvironments` |
-| `@deepseek-ai/dsh-notebook-environment-uv` | Provider for private uv installation, Python discovery and installation, workspace `.venv` provisioning, ownership recovery, and interpreter launch resolution |
-| `@deepseek-ai/dsh-notebook-kernel-jupyter` | Provider that launches `jupyter_client` from a resolved environment through managed subprocess and sandbox services |
-| `@deepseek-ai/dsh-tool-notebook` | Model Consumer that registers nine document and execution tools plus bounded user-execution injection |
-| `@deepseek-ai/dsh-notebook-remote` | Host Consumer that derives trusted workspace and permission policy and exposes the `notebooks` Typert Remote namespace |
-| `@deepseek-ai/dsh-client-ui-notebook` | Browser Consumer that owns document selection, editing, execution controls, environment setup, and rich-output rendering |
+| `@younthing/dsh-notebook` | Installable bundle that activates the complete capability through one profile patch |
+| `@younthing/dsh-notebook-core` | Service Definition for discovery, documents, file transactions, process-local projections, kernel registration, serialization, and teardown through `ctx.notebooks` |
+| `@younthing/dsh-notebook-environment` | Service Definition for browser-safe environment catalogs, opaque environment ids, provisioning operations, typed failures, and trusted launch resolution through `ctx.notebookEnvironments` |
+| `@younthing/dsh-notebook-environment-uv` | Provider for private uv installation, Python discovery and installation, workspace `.venv` provisioning, ownership recovery, and interpreter launch resolution |
+| `@younthing/dsh-notebook-kernel-jupyter` | Provider that launches `jupyter_client` from a resolved environment through managed subprocess and sandbox services |
+| `@younthing/dsh-tool-notebook` | Model Consumer that registers nine document and execution tools plus bounded user-execution injection |
+| `@younthing/dsh-notebook-remote` | Host Consumer that derives trusted workspace and permission policy and exposes the `notebooks` Typert Remote namespace |
+| `@younthing/dsh-client-ui-notebook` | Browser Consumer that owns document selection, editing, execution controls, environment setup, and rich-output rendering |
 
 Providers and Consumers depend on their Service Definitions, never on each other. Browser-safe type exports contain opaque ids, durable values, catalog entries, and typed error details; they do not expose Cordis services, absolute interpreter paths, kernelspec resource directories, executable arguments, or Host implementation types.
 
 ### The ipynb file is available without a kernel
 
-`NotebookService.open()` accepts an existing workspace `.ipynb` only, and `create()` atomically creates an absent path only. A missing open reports `NOT_FOUND`; a losing create reports `ALREADY_EXISTS`; neither operation overwrites or starts a kernel. Both publish the complete document through `notebook/open` and `notebook/cell`, so read, edit, insert, discover, and reload remain available while detached.
+`NotebookService.open()` accepts an existing workspace `.ipynb` only, and `create()` atomically creates an absent path only. A missing open reports `NOT_FOUND`; a losing create reports `ALREADY_EXISTS`; neither operation overwrites or starts a kernel. Both publish the complete document to the plugin-local projection, so read, edit, insert, discover, and reload remain available while detached.
 
 The Service Definition discovers workspace-relative `.ipynb` paths through bounded `ctx.fs` traversal without reading file contents. Canonical-target deduplication, containment checks, excluded directory names, depth and result limits, stable pagination, stale-cursor rejection, cancellation, and partial-result reporting constrain symlinks and large trees. The Host derives the scan root from the Session header and does not restore an Agent merely to discover files.
 
-Canonical filesystem targets coalesce within one exact Session instance; different sessions retain independent kernel state and compete through filesystem versions. Cell edits, stable-anchor insertions, and execution results replace the file through compare-and-swap before their session-event suffix is published. An external edit yields typed `WRITE_CONFLICT` and no mutation event.
+Canonical filesystem targets coalesce within one exact Session instance; different sessions retain independent kernel state and compete through filesystem versions. Cell edits, stable-anchor insertions, and execution results replace the file through compare-and-swap before the plugin-local projection changes. An external edit yields typed `WRITE_CONFLICT` and leaves the projection unchanged.
 
-`reload()` accepts one stable external revision and publishes a complete `notebook/reload` snapshot. It preserves the selected environment, retires the old process-local kernel, and does not start a replacement. The next execution or inspection may recover that selected environment. Reload is full-document acceptance, not a merge.
+`reload()` accepts one stable external revision and replaces the complete plugin-local document. It preserves the selected environment, retires the old process-local kernel, and does not start a replacement. The next execution or inspection may recover that selected environment. Reload is full-document acceptance, not a merge.
 
-### Kernel selection is durable; the process is disposable
+### Kernel selection and handles are process-local
 
-`NotebookDocument.kernel` is absent until a successful explicit attachment. Its durable value contains the opaque environment id, registered backend, optional kernelspec name, and generation. Successful attach, restart, and recovery publish the same `notebook/kernel` event and advance generation exactly once. The pre-release log rejects the superseded `notebook/restart` format rather than carrying a compatibility layer.
+`NotebookDocument.kernel` is absent until a successful explicit attachment. Its process-local value contains the opaque environment id, registered backend, optional kernelspec name, and generation. Successful attach, restart, and recovery advance generation exactly once.
 
-Execute and inspect return typed `ENVIRONMENT_REQUIRED` before an environment is selected. When a selection exists but its process-local handle is missing, they recover it before continuing. Failed startup publishes no kernel event and remains visible through runtime status. Calls for one kernel serialize through one queue, while different notebook kernels may execute concurrently.
+Execute and inspect return typed `ENVIRONMENT_REQUIRED` before an environment is selected. When a selection exists but its process-local handle is missing, they recover it before continuing. Failed startup leaves the selection unchanged and remains visible through runtime status. Calls for one kernel serialize through one queue, while different notebook kernels may execute concurrently.
 
 Each live or starting kernel records the complete `SandboxExecutionPolicy` used at startup. A committed sandbox-mode change synchronously makes mismatched records unavailable, aborts active and queued work, and begins retirement. Every kernel publication point checks the current policy. Shutdown, replacement, provider disposal, and failed startup abort owned work, terminate the complete process tree through the Provider, and await settlement.
 
@@ -67,7 +67,7 @@ The model Consumer splits strict `notebook_open` from `notebook_create`; the oth
 
 The plugin-owned Typert Remote separates document discovery, strict open and create, environment catalog, explicit uv and Python installation, provisioning, attachment, and runtime status. Environment failures carry stable manager, Python, permission, dependency, kernelspec, or kernel-start details; bounded stderr stays in Host diagnostics rather than the ordinary browser message.
 
-The browser resolves history before discovery. Its launcher shows zero, one, or many candidates without automatically opening the sole result, retains explicit New and Open by path actions, and preserves earlier results when a later page fails. Open documents use a keyboard-operable selector and one active canvas. A user-opened document becomes active; an Agent-opened document is announced without stealing focus. Draft, busy, error, kernel, and scroll state are isolated per document.
+The browser waits for its Session to open before discovery. Its launcher shows zero, one, or many candidates without automatically opening the sole result, retains explicit New and Open by path actions, and preserves earlier results when a later page fails. Open documents use a keyboard-operable selector and one active canvas. Draft, busy, error, kernel, and scroll state are isolated per document for the current process.
 
 Missing environment setup appears in place without covering document content. Run, Run all, Inspect, and Restart remain disabled while detached. The environment card exposes only the confirmations authorized above and attaches a ready environment automatically; a Run-triggered setup continues the original run. The header action can restore a notebook column hidden by responsive layout.
 
@@ -75,13 +75,13 @@ The browser selects one supported MIME alternative with `text/plain` fallback. S
 
 ### Composition
 
-Installing `@deepseek-ai/dsh-notebook` into a profile mounts the Service Definitions, uv environment Provider, Jupyter Provider, plugin-owned Remote, model Consumer, and browser companion. The installation is an explicit profile-level opt-in, so the nine model tools are available to every Agent preset in that profile, including `minimal`. Missing uv, Python, or `.venv` components are runtime catalog states with explicit recovery actions; they do not make application boot or document access silently incomplete.
+Installing `@younthing/dsh-notebook` into a profile mounts the Service Definitions, uv environment Provider, Jupyter Provider, plugin-owned Remote, model Consumer, and browser companion. The installation is an explicit profile-level opt-in, so the nine model tools are available to every Agent preset in that profile, including `minimal`. Missing uv, Python, or `.venv` components are runtime catalog states with explicit recovery actions; they do not make application boot or document access silently incomplete.
 
 ## Consequences
 
 Document work survives missing runtime dependencies, and every trusted executable decision remains on the Host. This separation adds explicit detached, environment, and kernel lifecycle states to every Consumer and requires durable environment identity to outlive process-local handles.
 
-The workspace file and session log agree at every published mutation, but a live kernel can contain variables that no cell source records. Restart and Run All make that state disposable; inspect can expose a named value, but the product does not claim dependency analysis or reproducible execution ordering.
+The workspace file is the durable document. Harness restart clears the open-document list, selected environments, kernel handles, and browser state; users reopen the same `.ipynb` file. A live kernel can contain variables that no cell source records. Restart and Run All make that state disposable; inspect can expose a named value, but the product does not claim dependency analysis or reproducible execution ordering.
 
 One uv-managed workspace `.venv` gives setup a predictable security and recovery model, but it excludes Conda, arbitrary environment locations, free-form package installation, `uv sync`, file watchers, and automatic polling. Explicit Python installation and owned rebuild require an extra confirmation instead of optimizing for one-click completion.
 

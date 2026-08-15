@@ -1,14 +1,14 @@
-# @deepseek-ai/dsh-tool-notebook
+# @younthing/dsh-tool-notebook
 
 [English](README.md) | 中文
 
 `ctx.notebooks` 的面向模型消费方。注册九个工具——`notebook_open`、`notebook_create`、`notebook_read`、`notebook_edit_cell`、`notebook_insert_cell`、`notebook_execute`、`notebook_restart`、`notebook_reload`、`notebook_inspect`——以及供人类发起执行的路径调用的 `executeNotebookCellAsUser()`。
 
-`@deepseek-ai/dsh-notebook` 组合包会在用户安装 Notebook 的每个 profile 中挂载本 Consumer。该 Consumer 与浏览器 UI 和内核 Provider 保持独立。
+`@younthing/dsh-notebook` 组合包会在用户安装 Notebook 的每个 profile 中挂载本 Consumer。该 Consumer 与浏览器 UI 和内核 Provider 保持独立。
 
 ```yaml
 - id: tool-notebook
-  name: '@deepseek-ai/dsh-tool-notebook'
+  name: '@younthing/dsh-tool-notebook'
 ```
 
 ## 操作与限额
@@ -44,4 +44,4 @@
 - 模型工具不支持删除或重排单元格；插入只支持开头或稳定的 `afterCellId` anchor。
 - Reload 是显式的完整快照替换，并非 cell merge；调用方应先检查经过外部编辑的文件，再决定是否接受。
 - 用户发起的执行需在模型工具之外调用 `executeNotebookCellAsUser()`。
-- 不依赖 `@deepseek-ai/dsh-notebook-kernel-jupyter`；安装组合包会单独挂载该 Provider。
+- 不依赖 `@younthing/dsh-notebook-kernel-jupyter`；安装组合包会单独挂载该 Provider。

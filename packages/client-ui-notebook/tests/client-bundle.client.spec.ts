@@ -12,7 +12,7 @@ import {
   ConversationEventRegistry, ConversationViewRegistry, SlotRegistry,
 } from '@deepseek-ai/dsh-client-runtime/client'
 
-const PLUGIN_ID = '@deepseek-ai/dsh-client-ui-notebook'
+const PLUGIN_ID = '@younthing/dsh-client-ui-notebook'
 
 interface Handoff {
   readonly id: string
@@ -25,7 +25,7 @@ type FixtureWindow = Window & {
 
 function readBundle(): string | undefined {
   try {
-    return readFileSync(resolve('packages/client-ui-notebook/lib/client.js'), 'utf8')
+    return readFileSync(resolve('packages/client-ui-notebook/lib/client.cjs'), 'utf8')
   } catch {
     return undefined
   }
@@ -79,7 +79,7 @@ describe('ui-notebook tsdown client artifact', () => {
     slots.register({
       name: 'root',
       children: {
-        companion: { kind: 'single', scope: 'session' },
+        details: { kind: 'single', scope: 'session' },
         'conversation.session.header': { kind: 'single', scope: 'session' },
       },
     } as never, () => null)
@@ -88,11 +88,10 @@ describe('ui-notebook tsdown client artifact', () => {
       children: { 'conversation.session.header.actions': { kind: 'list', scope: 'session' } },
     } as never, () => null)
     ctx.provide('sessions', { binding: () => undefined })
-    ctx.provide('workspaces', { replaceSession: vi.fn(async () => {}) })
+    ctx.provide('workspaces', { archiveSession: vi.fn(async () => {}) })
     ctx.provide('layout', {
-      toggleCompanion: vi.fn(),
-      openCompanion: vi.fn(),
-      closeCompanion: vi.fn(),
+      openDetails: vi.fn(),
+      closeDetails: vi.fn(),
     })
     ctx.provide('locale', { register: vi.fn(() => () => {}) })
     ctx.provide('remote', {
@@ -105,12 +104,12 @@ describe('ui-notebook tsdown client artifact', () => {
     await fiber.await()
     const events = ctx.get('conversationEvents') as ConversationEventRegistry
     const views = ctx.get('conversationViews') as ConversationViewRegistry
-    expect(slots.entries('companion')).toHaveLength(1)
+    expect(slots.entries('details')).toHaveLength(1)
     expect(events.entries().map(definition => definition.kind)).toContain('notebook-event')
     expect(views.entries().map(definition => definition.target)).toEqual(['notebook'])
 
     await fiber.dispose()
-    expect(slots.entries('companion')).toEqual([])
+    expect(slots.entries('details')).toEqual([])
     expect(events.entries()).toEqual([])
     expect(views.entries()).toEqual([])
   })

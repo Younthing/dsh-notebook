@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-notebook-kernel-jupyter
+# @younthing/dsh-notebook-kernel-jupyter
 
 English | [中文](README.zh.md)
 
@@ -26,7 +26,7 @@ Jupyter `stream`, `display_data`, `execute_result`, `update_display_data`, `clea
 
 #### What the model sees
 
-Nothing directly. The `@deepseek-ai/dsh-tool-notebook` Consumer owns the tool schemas and model-visible result text.
+Nothing directly. The `@younthing/dsh-tool-notebook` Consumer owns the tool schemas and model-visible result text.
 
 #### Token effect
 
@@ -40,4 +40,4 @@ No direct invalidation.
 
 - Kernel state remains process-local. The provider owns supervisor transport and process-tree teardown; the notebook Service, tool, and UI expose explicit restart, while the Service logs each replacement generation and exposes reload for full-snapshot recovery. A harness process restart still loses live kernel state, so the caller must explicitly restart or reload before relying on a fresh kernel.
 - On Windows `workspace-write`, the sandbox gives each session a private temporary directory, but the restricted token cannot replace the DACL on Jupyter's connection file. The provider therefore enables Jupyter Core's `JUPYTER_ALLOW_INSECURE_WRITES` escape hatch only for that combination; the connection file stays under the session's private temporary directory. `danger-full-access` keeps Jupyter's normal DACL rewrite, while `read-only` still fails loudly because it has no writable temporary capability. The supervisor also binds the kernel process's standard input to NUL; Jupyter input remains available through its ZMQ channel. Both processes retain the restricted token, and the provider never retries a failed start without confinement.
-- This provider does not install Python packages. The selected environment provider must supply compatible Jupyter dependencies and its advertised kernelspec; `@deepseek-ai/dsh-notebook-environment-uv` provisions the pinned default environment.
+- This provider does not install Python packages. The selected environment provider must supply compatible Jupyter dependencies and its advertised kernelspec; `@younthing/dsh-notebook-environment-uv` provisions the pinned default environment.

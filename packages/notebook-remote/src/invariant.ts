@@ -4,7 +4,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 import type {} from './index.ts'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-notebook-remote'
+const PACKAGE_NAME = '@younthing/dsh-notebook-remote'
 
 /** Cordis invariant-companion plugin name. */
 export const name = 'notebook-remote-invariant'

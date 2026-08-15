@@ -15,9 +15,9 @@ import ToolRuntime from '@deepseek-ai/dsh-tools'
 import NotebookService, {
   MemoryKernelBackend,
   NotebookId,
-} from '@deepseek-ai/dsh-notebook-core'
-import { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment'
-import * as toolNotebook from '@deepseek-ai/dsh-tool-notebook'
+} from '@younthing/dsh-notebook-core'
+import { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment'
+import * as toolNotebook from '@younthing/dsh-tool-notebook'
 import { toolRunContext } from './tool-run-context.ts'
 
 let context: Context | undefined

@@ -4,9 +4,9 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {
   NotebookKernelExecutionEvent,
   NotebookKernelStartSpec,
-} from '@deepseek-ai/dsh-notebook-core'
+} from '@younthing/dsh-notebook-core'
 import type { ConfinedArgv, SandboxPolicy } from '@deepseek-ai/dsh-sandbox'
-import { NotebookEnvironmentError } from '@deepseek-ai/dsh-notebook-environment'
+import { NotebookEnvironmentError } from '@younthing/dsh-notebook-environment'
 import type {
   SubprocessHandle,
   SubprocessOutcome,
@@ -17,7 +17,7 @@ import {
   JupyterKernelBackend,
   SupervisorRpcError,
   apply,
-} from '@deepseek-ai/dsh-notebook-kernel-jupyter'
+} from '@younthing/dsh-notebook-kernel-jupyter'
 
 interface Deferred<T> {
   readonly promise: Promise<T>

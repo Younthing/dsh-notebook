@@ -3,7 +3,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-notebook'
+const PACKAGE_NAME = '@younthing/dsh-notebook'
 
 /** Cordis companion plugin name. */
 export const name = 'notebook-bundle-invariant'

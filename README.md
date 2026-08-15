@@ -2,16 +2,16 @@
 
 English | [中文](README.zh.md)
 
-Notebook is an installable plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It gives agents and Web users durable workspace-backed `.ipynb` documents, Jupyter execution, rich MIME output, and reproducible Python environments without making Notebook part of the Harness core.
+Notebook is an installable plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It gives agents and Web users workspace-backed `.ipynb` documents, Jupyter execution, rich MIME output, and reproducible Python environments without making Notebook part of the Harness core.
 
-> Status: pre-release extraction. The first release requires DeepSeek Harness `>=0.1.0-rc.7 <0.2.0`; that version provides the external Remote, companion-panel, durable-event, and browser-test extension points used here.
+> Status: pre-release. The first release supports DeepSeek Harness `>=0.1.0-rc.6 <0.2.0` and uses the existing details panel. Notebook files are durable, while the open-document list and browser state are process-local; reopen a `.ipynb` file after restarting Harness.
 
 ## Install
 
 Install the one public bundle into the profile where Notebook should be enabled:
 
 ```sh
-dsh plugin --profile web add @deepseek-ai/dsh-notebook
+dsh plugin --profile web add @younthing/dsh-notebook
 ```
 
 The bundle activates the Host service, uv environment provider, Jupyter kernel provider, browser Remote, Web companion panel, and all nine model tools. Installing it into another profile enables the same complete capability there, including `minimal`; installation is an explicit profile-level opt-in.
@@ -19,19 +19,19 @@ The bundle activates the Host service, uv environment provider, Jupyter kernel p
 Remove it with:
 
 ```sh
-dsh plugin --profile web remove @deepseek-ai/dsh-notebook
+dsh plugin --profile web remove @younthing/dsh-notebook
 ```
 
 ## What it provides
 
-- Durable `notebook/*` session events and `.ipynb` compare-and-swap persistence.
+- `.ipynb` compare-and-swap persistence with a process-local document projection.
 - Discovery, open, create, detached editing, insertion, reload, and multi-document state.
 - Private uv-managed Python environments and a Jupyter kernel backend.
 - Stream, error, JSON, HTML, Markdown, image attachment, and Plotly-capable MIME rendering.
 - Nine model tools: `notebook_open`, `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_insert_cell`, `notebook_execute`, `notebook_restart`, `notebook_reload`, and `notebook_inspect`.
 - A typed `ctx.remote.notebooks` Host/Web interface; a cold discovery or status read does not activate an Agent.
 
-The user installs one plugin package. The repository keeps eight publishable packages because the Service Definition, environment provider, kernel provider, Remote, tool consumer, and browser consumer have different runtime dependencies and release surfaces. `@deepseek-ai/dsh-notebook` is the only package users should add directly.
+The user installs one plugin package. The repository keeps eight publishable packages because the Service Definition, environment provider, kernel provider, Remote, tool consumer, and browser consumer have different runtime dependencies and release surfaces. `@younthing/dsh-notebook` is the only package users should add directly.
 
 ## Environment and security
 
@@ -41,7 +41,7 @@ Environment setup is user-initiated in the Web UI. The provider downloads a chec
 
 ## Development
 
-Requirements: Node.js `^22.19.0 || >=24.0.0`, pnpm 11, and DeepSeek Harness rc.7 packages once published.
+Requirements: Node.js `^22.19.0 || >=24.0.0`, pnpm 11, and DeepSeek Harness rc.6 packages.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -52,7 +52,7 @@ pnpm run publint
 pnpm run pack:verify
 ```
 
-Real Jupyter integration is opt-in and needs Python 3.12 plus Jupyter dependencies. The migrated browser and assembled-profile fixtures remain under `tests/`; their standalone runners will be enabled against the public Harness rc.7 test/application interfaces rather than a sibling checkout.
+Real Jupyter integration is opt-in and needs Python 3.12 plus Jupyter dependencies. Browser state restoration through Harness Session events is deferred until Harness publishes the required external-event API.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks, [SECURITY.md](SECURITY.md) for private vulnerability reporting, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for bundled/runtime-acquired components.
 

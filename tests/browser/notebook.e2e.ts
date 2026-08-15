@@ -12,7 +12,7 @@ import type {
   NotebookFileVersion,
   NotebookId as NotebookDocumentId,
   NotebookEnvironmentId,
-} from '@deepseek-ai/dsh-notebook/types'
+} from '@younthing/dsh-notebook/types'
 import type {} from '@deepseek-ai/dsh-session-title'
 import {
   assertFixtureInventory,

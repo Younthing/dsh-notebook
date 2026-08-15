@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {
   CellId, ExecutionId, NotebookFileVersion, NotebookId, NotebookMimeBundle,
-} from '@deepseek-ai/dsh-notebook-core/types'
-import type { NotebookEnvironmentId } from '@deepseek-ai/dsh-notebook-environment/types'
+} from '@younthing/dsh-notebook-core/types'
+import type { NotebookEnvironmentId } from '@younthing/dsh-notebook-environment/types'
 import type {
   NotebookConversationViewNode,
   NotebookSessionEvent,

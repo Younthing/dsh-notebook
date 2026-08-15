@@ -2,7 +2,7 @@
  * Browser-safe catalog, opaque identity, and error vocabulary for notebook Python environments.
  * Host-only operation requests and launch paths live outside this pure type face.
  *
- * @module @deepseek-ai/dsh-notebook-environment/types
+ * @module @younthing/dsh-notebook-environment/types
  */
 
 import type { Branded } from '@deepseek-ai/dsh-brand'

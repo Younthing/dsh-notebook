@@ -4,7 +4,7 @@ import type {
   NotebookDocument,
   NotebookImageMimeValue,
   NotebookJsonObject,
-} from '@deepseek-ai/dsh-notebook-core/types'
+} from '@younthing/dsh-notebook-core/types'
 import {
   boundNotebookText,
   renderNotebookDocument,

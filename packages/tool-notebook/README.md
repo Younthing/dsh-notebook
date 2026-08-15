@@ -1,14 +1,14 @@
-# @deepseek-ai/dsh-tool-notebook
+# @younthing/dsh-tool-notebook
 
 English | [中文](README.zh.md)
 
 Model-facing Consumer for `ctx.notebooks`. Registers nine tools — `notebook_open`, `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_insert_cell`, `notebook_execute`, `notebook_restart`, `notebook_reload`, and `notebook_inspect` — plus `executeNotebookCellAsUser()` for human-initiated execution paths.
 
-The `@deepseek-ai/dsh-notebook` bundle mounts this consumer for every profile where the user installs Notebook. The consumer remains independent of the browser UI and kernel Provider.
+The `@younthing/dsh-notebook` bundle mounts this consumer for every profile where the user installs Notebook. The consumer remains independent of the browser UI and kernel Provider.
 
 ```yaml
 - id: tool-notebook
-  name: '@deepseek-ai/dsh-tool-notebook'
+  name: '@younthing/dsh-tool-notebook'
 ```
 
 ## Operations and Limits
@@ -44,4 +44,4 @@ Tool schemas and the `tool:notebook` prompt section invalidate the request prefi
 - Cell deletion and reordering are not model tools; insertion supports only the start or a stable `afterCellId` anchor.
 - Reload is an explicit full-snapshot replacement, not a cell merge; callers should first inspect the externally edited file before accepting it.
 - User-initiated execution requires `executeNotebookCellAsUser()` outside the model tool surface.
-- No dependency on `@deepseek-ai/dsh-notebook-kernel-jupyter`; the install bundle mounts that Provider separately.
+- No dependency on `@younthing/dsh-notebook-kernel-jupyter`; the install bundle mounts that Provider separately.

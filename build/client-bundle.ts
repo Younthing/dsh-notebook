@@ -181,7 +181,7 @@ function clientConfig(id: string, entry: string): UserConfig {
     name: `${id}/client`,
     entry: { client: entry },
     // Browser bundle lands next to the node half (single lib/ artifact dir;
-    // the entryFileNames pin keeps it exactly lib/client.js). clean must stay
+    // the entryFileNames pin keeps it exactly lib/client.cjs). clean must stay
     // off — a default clean would wipe the node-half output emitted above.
     outDir: 'lib',
     format: 'cjs',
@@ -269,8 +269,8 @@ function clientConfig(id: string, entry: string): UserConfig {
       },
     }],
     outputOptions: {
-      entryFileNames: 'client.js',
-      // The map is served from /plugins/<scoped-package>/client.js.map. The
+      entryFileNames: 'client.cjs',
+      // The map is served from /plugins/<scoped-package>/client.cjs.map. The
       // browser resolves its local sources back into URLs that mirror the
       // /packages/<group>/<package>/src directories; sourcesContent keeps them usable
       // without exposing that tree as an HTTP route.
