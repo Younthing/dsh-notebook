@@ -1,5 +1,9 @@
 # dsh-notebook
 
+[![CI](https://github.com/Younthing/dsh-notebook/actions/workflows/ci.yml/badge.svg)](https://github.com/Younthing/dsh-notebook/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@younthing/dsh-notebook)](https://www.npmjs.com/package/@younthing/dsh-notebook)
+[![license](https://img.shields.io/github/license/Younthing/dsh-notebook)](LICENSE)
+
 English | [中文](README.zh.md)
 
 Notebook is an installable plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It gives agents and Web users workspace-backed `.ipynb` documents, Jupyter execution, rich MIME output, and reproducible Python environments without making Notebook part of the Harness core.

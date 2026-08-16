@@ -2,6 +2,7 @@
   "name": "@younthing/dsh-notebook-workspace",
   "version": "0.1.0-rc.1",
   "private": true,
+  "description": "Development workspace for the standalone Jupyter notebook plugin for DeepSeek Harness",
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@11.7.0",
@@ -39,18 +40,19 @@
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.8"
   },
-  "description": "[English](README.md) | 中文",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "test": "tests"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Younthing/dsh-notebook.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "deepseek-harness",
+    "jupyter",
+    "notebook",
+    "ai-agent",
+    "typescript",
+    "python"
+  ],
+  "author": "Younthing",
   "bugs": {
     "url": "https://github.com/Younthing/dsh-notebook/issues"
   },

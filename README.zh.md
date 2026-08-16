@@ -1,5 +1,9 @@
 # dsh-notebook
 
+[![CI](https://github.com/Younthing/dsh-notebook/actions/workflows/ci.yml/badge.svg)](https://github.com/Younthing/dsh-notebook/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@younthing/dsh-notebook)](https://www.npmjs.com/package/@younthing/dsh-notebook)
+[![license](https://img.shields.io/github/license/Younthing/dsh-notebook)](LICENSE)
+
 [English](README.md) | 中文
 
 Notebook 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的可安装插件。它为智能体和 Web 用户提供基于工作区的 `.ipynb` 文档、Jupyter 执行、富 MIME 输出与可复现的 Python 环境，而不再把 Notebook 放进 Harness 核心。

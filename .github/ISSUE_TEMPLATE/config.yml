@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Younthing/dsh-notebook/security/advisories/new
+    about: Report vulnerabilities privately instead of opening a public issue.
+  - name: DeepSeek Harness issues
+    url: https://github.com/deepseek-ai/deepseek-harness/issues
+    about: Report problems that reproduce without the Notebook plugin to Harness.

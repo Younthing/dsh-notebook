@@ -138,13 +138,15 @@ describe('createApiProxy notebook domain', () => {
     await ctx.plugin(SessionStore)
     await ctx.plugin(TypertRegistry)
     await ctx.plugin(AgentRegistry)
-    await ctx.plugin(SandboxPolicyService, { mode: 'read-only', workspaceRoot: 'C:/fallback' })
+    const workspaceRoot = resolve('workspace')
+    const fallbackRoot = resolve('fallback')
+    await ctx.plugin(SandboxPolicyService, { mode: 'read-only', workspaceRoot: fallbackRoot })
     const sessionId = SessionId('cold-notebook')
     const header = {
       version: 0,
       id: sessionId,
       createdAt: 1,
-      cwd: 'C:/workspace',
+      cwd: workspaceRoot,
     } satisfies SessionHeader
     const events = [{
       type: 'sandbox/mode',
@@ -176,7 +178,7 @@ describe('createApiProxy notebook domain', () => {
     ctx.provide('notebookEnvironments', { environmentCatalog } as never)
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'test', model: 'test' }),
-      cwd: 'C:/fallback',
+      cwd: fallbackRoot,
     })
 
     const discovered = await api.notebooks.discover({
@@ -198,10 +200,10 @@ describe('createApiProxy notebook domain', () => {
     expect(catalogResponse.result).toEqual({ ok: true, value: catalog })
     expect(environmentCatalog).toHaveBeenCalledOnce()
     const operation = environmentCatalog.mock.calls[0]?.[0]
-    expect(operation?.workspaceRoot).toBe(resolve('C:/workspace'))
+    expect(operation?.workspaceRoot).toBe(workspaceRoot)
     expect(operation?.sandboxPolicy).toEqual({
       mode: 'workspace-write',
-      workspaceRoot: resolve('C:/workspace'),
+      workspaceRoot,
       sessionId,
     })
     expect(operation?.signal).toBeInstanceOf(AbortSignal)

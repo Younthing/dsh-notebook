@@ -1,4 +1,4 @@
-import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { tmpdir } from 'node:os'
@@ -175,7 +175,9 @@ interface SetupOptions {
 async function setupLoader(options: SetupOptions = {}): Promise<SetupResult> {
   const root = await mkdtemp(join(tmpdir(), 'dsh-notebook-environment-loader-'))
   temporaryDirectories.push(root)
-  const workspaceRoot = options.workspaceRoot ?? join(root, 'workspace')
+  const workspaceDirectory = options.workspaceRoot ?? join(root, 'workspace')
+  await mkdir(workspaceDirectory, { recursive: true })
+  const workspaceRoot = await realpath(workspaceDirectory)
   const dshHome = join(root, 'dsh-home')
   const uvExecutable = join(root, 'tools', process.platform === 'win32' ? 'uv.exe' : 'uv')
   const pythonExecutable = options.configuredPythonInWorkspace === true
@@ -183,7 +185,6 @@ async function setupLoader(options: SetupOptions = {}): Promise<SetupResult> {
     : options.managedPython === true
       ? join(dshHome, 'tools', 'python', 'cpython-3.12', process.platform === 'win32' ? 'python.exe' : 'bin/python')
       : join(root, 'tools', process.platform === 'win32' ? 'python.exe' : 'python')
-  await mkdir(workspaceRoot, { recursive: true })
   const configPath = join(root, 'cordis.yml')
   const config = [
     '- name: fixture:sandbox',
