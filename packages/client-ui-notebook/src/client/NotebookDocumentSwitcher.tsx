@@ -43,7 +43,7 @@ export function NotebookDocumentSwitcher({
           if (selected !== undefined) onSelect(selected.id)
         }}
       >
-        {notebooks.map(item => <option key={item.id} value={String(item.id)}>{item.path}</option>)}
+        {notebooks.map(item => <option key={item.id} value={String(item.id)} title={item.path}>{item.path}</option>)}
       </select>
       {newDocumentCount > 0
         ? (

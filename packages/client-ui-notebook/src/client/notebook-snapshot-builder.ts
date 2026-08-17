@@ -185,13 +185,18 @@ function isCurrentNotebookEvent(event: NotebookSessionEvent): boolean {
         && (data.cellType === 'code' || data.cellType === 'markdown' || data.cellType === 'raw')
         && typeof data.source === 'string'
         && isNonnegativeInteger(data.index)
-        && (data.operation === 'create' || data.operation === 'update')
+        && (data.operation === 'create'
+          || data.operation === 'update'
+          || data.operation === 'delete'
+          || data.operation === 'move')
         && typeof data.fileVersion === 'string'
         && (data.metadata === undefined || isRecord(data.metadata))
         && (data.attachments === undefined || isAttachments(data.attachments))
         && (data.outputs === undefined
           || (Array.isArray(data.outputs) && data.outputs.every(isNotebookOutput)))
         && (data.executionCount === undefined || isNonnegativeInteger(data.executionCount))
+        && (data.operation !== 'move'
+          || (isNonnegativeInteger(data.fromIndex) && isNonnegativeInteger(data.toIndex)))
     case 'notebook/execute':
       return hasExecutionIdentity(data) && (data.initiator === 'agent' || data.initiator === 'user')
     case 'notebook/output':
@@ -443,7 +448,53 @@ class NotebookProjector {
       })
       return
     }
+    if (data.operation === 'delete') {
+      const target = document.cells[data.index]
+      if (target === undefined || target.id !== data.cellId) {
+        this.incomplete = true
+        return
+      }
+      const cells = [...document.cells]
+      cells.splice(data.index, 1)
+      this.replaceDocument(documentIndex, {
+        ...document,
+        fileVersion: data.fileVersion,
+        cells: Object.freeze(cells),
+      })
+      return
+    }
+    if (data.operation === 'move') {
+      const fromIndex = data.fromIndex
+      const toIndex = data.toIndex
+      if (fromIndex === undefined
+        || toIndex === undefined
+        || fromIndex < 0
+        || fromIndex >= document.cells.length
+        || toIndex < 0
+        || toIndex >= document.cells.length) {
+        this.incomplete = true
+        return
+      }
+      const source = document.cells[fromIndex]
+      if (source === undefined || source.id !== data.cellId) {
+        this.incomplete = true
+        return
+      }
+      const cells = [...document.cells]
+      cells.splice(fromIndex, 1)
+      cells.splice(toIndex, 0, source)
+      this.replaceDocument(documentIndex, {
+        ...document,
+        fileVersion: data.fileVersion,
+        cells: Object.freeze(cells),
+      })
+      return
+    }
     if (cellIndex === -1) {
+      this.incomplete = true
+      return
+    }
+    if (cellIndex !== data.index) {
       this.incomplete = true
       return
     }

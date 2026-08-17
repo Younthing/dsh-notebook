@@ -92,10 +92,21 @@ export type NotebookKey =
   | 'cell.markdownEmpty'
   | 'cell.raw'
   | 'cell.shortcut'
+  | 'cell.insertLabel'
   | 'cell.insertCode'
   | 'cell.insertMarkdown'
   | 'cell.insertRaw'
   | 'cell.continue'
+  | 'cell.shortcutTitle'
+  | 'cell.reloadTitle'
+  | 'cell.restartTitle'
+  | 'cell.runAllInProgress'
+  | 'cell.actions'
+  | 'cell.copy'
+  | 'cell.moveUp'
+  | 'cell.moveDown'
+  | 'cell.delete'
+  | 'cell.deleteConfirm'
   | 'status.idle'
   | 'status.running'
   | 'status.ok'
@@ -122,6 +133,12 @@ export type NotebookKey =
   | 'action.history.settled'
   | 'action.replace.pending'
   | 'action.replace.settled'
+  | 'action.copy.pending'
+  | 'action.copy.settled'
+  | 'action.move.pending'
+  | 'action.move.settled'
+  | 'action.delete.pending'
+  | 'action.delete.settled'
   | 'action.failed'
   | 'output.omittedRows'
   | 'output.omittedPoints'
@@ -228,10 +245,21 @@ export const zh: Record<NotebookKey, string> = {
   'cell.markdownEmpty': '写一段说明，或点这里编辑',
   'cell.raw': '原始文本单元格',
   'cell.shortcut': 'Shift+Enter',
+  'cell.insertLabel': '插入单元格',
   'cell.insertCode': '代码',
   'cell.insertMarkdown': 'Markdown',
   'cell.insertRaw': '原始文本',
   'cell.continue': '开始编写',
+  'cell.shortcutTitle': 'Shift+Enter / Ctrl+Enter / Meta+Enter',
+  'cell.reloadTitle': '放弃当前改动并从磁盘重新加载',
+  'cell.restartTitle': '重新启动内核（会清除运行时状态）',
+  'cell.runAllInProgress': '正在按顺序运行代码单元格',
+  'cell.actions': '单元格操作',
+  'cell.copy': '复制单元格',
+  'cell.moveUp': '上移单元格',
+  'cell.moveDown': '下移单元格',
+  'cell.delete': '删除单元格',
+  'cell.deleteConfirm': '再次点击确认删除',
   'status.idle': '就绪',
   'status.running': '正在运行',
   'status.ok': '运行成功',
@@ -258,6 +286,12 @@ export const zh: Record<NotebookKey, string> = {
   'action.history.settled': '较早历史已加载',
   'action.replace.pending': '正在归档当前会话并新建会话…',
   'action.replace.settled': '已新建会话',
+  'action.copy.pending': '正在复制单元格…',
+  'action.copy.settled': '单元格已复制',
+  'action.move.pending': '正在移动单元格…',
+  'action.move.settled': '单元格已移动',
+  'action.delete.pending': '正在删除单元格…',
+  'action.delete.settled': '单元格已删除',
   'action.failed': '操作失败：',
   'output.omittedRows': '另有 {count} 行未渲染。',
   'output.omittedPoints': '另有 {count} 个数据点未渲染。',
@@ -358,10 +392,21 @@ export const en: Record<NotebookKey, string> = {
   'cell.markdownEmpty': 'Write a note, or click to edit',
   'cell.raw': 'Raw text cell',
   'cell.shortcut': 'Shift+Enter',
+  'cell.insertLabel': 'Insert cell',
   'cell.insertCode': 'Code',
   'cell.insertMarkdown': 'Markdown',
   'cell.insertRaw': 'Raw',
   'cell.continue': 'Start coding',
+  'cell.shortcutTitle': 'Shift+Enter / Ctrl+Enter / Meta+Enter',
+  'cell.reloadTitle': 'Discard local changes and reload from disk',
+  'cell.restartTitle': 'Restart the kernel (clears runtime state)',
+  'cell.runAllInProgress': 'Running code cells in order',
+  'cell.actions': 'Cell actions',
+  'cell.copy': 'Copy cell',
+  'cell.moveUp': 'Move cell up',
+  'cell.moveDown': 'Move cell down',
+  'cell.delete': 'Delete cell',
+  'cell.deleteConfirm': 'Click again to confirm delete',
   'status.idle': 'Ready',
   'status.running': 'Running',
   'status.ok': 'Run succeeded',
@@ -388,6 +433,12 @@ export const en: Record<NotebookKey, string> = {
   'action.history.settled': 'Earlier history loaded',
   'action.replace.pending': 'Archiving this session and starting a new one…',
   'action.replace.settled': 'New session started',
+  'action.copy.pending': 'Duplicating cell…',
+  'action.copy.settled': 'Cell duplicated',
+  'action.move.pending': 'Moving cell…',
+  'action.move.settled': 'Cell moved',
+  'action.delete.pending': 'Deleting cell…',
+  'action.delete.settled': 'Cell deleted',
   'action.failed': 'Action failed: ',
   'output.omittedRows': '{count} additional rows omitted.',
   'output.omittedPoints': '{count} additional points omitted.',

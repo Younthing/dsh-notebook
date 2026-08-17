@@ -119,20 +119,27 @@ export function NotebookLauncher({
             <ul className={css.candidateList} aria-label={t('launcher.candidates')}>
               {discovery.items.map(item => (
                 <li key={item.path} className={css.candidateRow}>
-                  <IconCodeOutline16 size={16} />
-                  <span className={css.candidatePath} title={item.path}>{item.path}</span>
-                  {formattedSize(item.size) !== undefined
-                    ? <span className={css.candidateSize}>{formattedSize(item.size)}</span>
-                    : null}
+                  <button
+                    type="button"
+                    className={css.candidateSelect}
+                    disabled={pending}
+                    onClick={() => { onOpenCandidate(item.path) }}
+                  >
+                    <IconCodeOutline16 size={16} aria-hidden />
+                    <span className={css.candidatePath}>{item.path}</span>
+                    {formattedSize(item.size) !== undefined
+                      ? <span className={css.candidateSize}>{formattedSize(item.size)}</span>
+                      : null}
+                  </button>
                   <Button
                     variant="outline"
                     size="sm"
                     icon={<IconFolderOpenOutline16 size={14} />}
                     disabled={pending}
+                    aria-label={t('launcher.open')}
+                    title={t('launcher.open')}
                     onClick={() => { onOpenCandidate(item.path) }}
-                  >
-                    {t('launcher.open')}
-                  </Button>
+                  />
                 </li>
               ))}
             </ul>
@@ -189,8 +196,8 @@ export function NotebookLauncher({
           </Button>
         </form>
 
-        <details className={css.openExisting}>
-          <summary>{t('launcher.openByPath')}</summary>
+        <section className={css.openExisting}>
+          <h3 className={css.openExistingTitle}>{t('launcher.openByPath')}</h3>
           <form
             className={css.openForm}
             onSubmit={(event) => {
@@ -223,7 +230,7 @@ export function NotebookLauncher({
               {t('launcher.open')}
             </Button>
           </form>
-        </details>
+        </section>
         {notice}
       </div>
     </section>

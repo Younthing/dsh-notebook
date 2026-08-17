@@ -314,6 +314,9 @@ function viewProps(overrides: Partial<NotebookViewInjected> & {
       status: 'ready', environmentId: EnvironmentId('workspace-venv'),
     })),
     editCell: injected.editCell ?? (async () => {}),
+    deleteCell: injected.deleteCell ?? (async () => {}),
+    moveCell: injected.moveCell ?? (async () => {}),
+    copyCell: injected.copyCell ?? (async () => {}),
     insertCell: injected.insertCell ?? (async () => {}),
     runCell: injected.runCell ?? (async () => 'ok' as const),
     restartNotebook: injected.restartNotebook ?? (async () => {}),
@@ -406,6 +409,9 @@ async function bench(notebooks?: {
       runtimeStatus: vi.fn(async () => ok({ status: 'ready', environmentId: 'workspace-venv' })),
       readAttachment: vi.fn(async () => ok({ attachment: IMAGE_REF, data: 'AQID' })),
       editCell: vi.fn(notebooks?.editCell ?? (async () => ok({ ok: true }))),
+      deleteCell: vi.fn(notebooks?.deleteCell ?? (async () => ok({ ok: true }))),
+      moveCell: vi.fn(notebooks?.moveCell ?? (async () => ok({ ok: true }))),
+      copyCell: vi.fn(notebooks?.copyCell ?? (async () => ok({ cellId: 'cell-copy' }))),
       insertCell: vi.fn(notebooks?.insertCell ?? (async () => ok({ cellId: 'cell-insert' }))),
       runCell: vi.fn(notebooks?.runCell ?? (async () => ok({
         executionId: 'exec-run', status: 'ok', executionCount: 1,
@@ -809,6 +815,36 @@ describe('NotebookView', () => {
     fireEvent.click(screen.getByRole('button', { name: '运行' }))
     await waitFor(() => {
       expect(runCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'), 'print("draft")')
+    })
+  })
+
+  it('duplicates a cell from the cell actions', async () => {
+    const copyCell = vi.fn(async () => {})
+    render(<NotebookView {...viewProps({ copyCell })} />)
+    fireEvent.click(screen.getByRole('button', { name: '复制单元格' }))
+    await waitFor(() => {
+      expect(copyCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'))
+    })
+  })
+
+  it('moves a cell down from the cell actions', async () => {
+    const moveCell = vi.fn(async () => {})
+    render(<NotebookView {...viewProps({ moveCell })} />)
+    fireEvent.click(screen.getByRole('button', { name: '下移单元格' }))
+    await waitFor(() => {
+      expect(moveCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'), 1)
+    })
+  })
+
+  it('confirms before deleting a cell', async () => {
+    const deleteCell = vi.fn(async () => {})
+    render(<NotebookView {...viewProps({ deleteCell })} />)
+    const removeButton = screen.getByRole('button', { name: '删除单元格' })
+    fireEvent.click(removeButton)
+    expect(deleteCell).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: '再次点击确认删除' }))
+    await waitFor(() => {
+      expect(deleteCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'))
     })
   })
 

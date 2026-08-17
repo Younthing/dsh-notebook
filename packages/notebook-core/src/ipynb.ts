@@ -215,6 +215,95 @@ export function insertIpynbCell(
   return { ...document, cells }
 }
 
+function cloneJsonValue(value: IpynbJsonValue): IpynbJsonValue {
+  if (Array.isArray(value)) return value.map(cloneJsonValue)
+  if (value !== null && typeof value === 'object') {
+    const cloned: { [key: string]: IpynbJsonValue } = {}
+    for (const [key, entry] of Object.entries(value)) cloned[key] = cloneJsonValue(entry)
+    return cloned
+  }
+  return value
+}
+
+/** Deep-clone one cell under a fresh identity (used by cell duplication). */
+function cloneCell(cell: IpynbCell, id: CellId): IpynbCell {
+  const raw = cloneJsonValue(cell.raw) as IpynbJsonObject
+  return {
+    ...cell,
+    id,
+    metadata: cloneJsonValue(cell.metadata) as IpynbJsonObject,
+    attachments: cloneJsonValue(cell.attachments as unknown as IpynbJsonValue) as unknown as IpynbCell['attachments'],
+    outputs: cell.outputs.map(output => cloneJsonValue(output as unknown as IpynbJsonValue) as unknown as NotebookKernelOutput),
+    rawOutputs: cell.rawOutputs.map(output => cloneJsonValue(output) as unknown as IpynbJsonObject),
+    raw: { ...raw, id },
+  }
+}
+
+/**
+ * Remove one cell from the ordered notebook.
+ * @param document - parsed notebook document.
+ * @param cellId - target cell id.
+ * @returns immutable replacement document without the cell.
+ */
+export function removeIpynbCell(
+  document: IpynbDocument,
+  cellId: CellId,
+): IpynbDocument {
+  if (document.cells.length <= 1) {
+    throw new IpynbFormatError('a notebook must retain at least one cell')
+  }
+  const index = cellIndex(document, cellId)
+  const cells = [...document.cells]
+  cells.splice(index, 1)
+  return { ...document, cells }
+}
+
+/**
+ * Move one cell to another zero-based index in the same notebook.
+ * @param document - parsed notebook document.
+ * @param cellId - target cell id.
+ * @param toIndex - destination index after the source cell is removed.
+ * @returns immutable replacement document.
+ */
+export function moveIpynbCell(
+  document: IpynbDocument,
+  cellId: CellId,
+  toIndex: number,
+): IpynbDocument {
+  const fromIndex = cellIndex(document, cellId)
+  if (!Number.isSafeInteger(toIndex) || toIndex < 0 || toIndex >= document.cells.length) {
+    throw new IpynbFormatError(`cell move index ${String(toIndex)} is out of range`)
+  }
+  if (fromIndex === toIndex) return document
+  const cells = [...document.cells]
+  const [cell] = cells.splice(fromIndex, 1)
+  cells.splice(toIndex, 0, cell as IpynbCell)
+  return { ...document, cells }
+}
+
+/**
+ * Duplicate one cell immediately after its source while retaining cell state.
+ * @param document - parsed notebook document.
+ * @param cellId - source cell id.
+ * @param newCellId - fresh identity for the duplicated cell.
+ * @returns immutable replacement document with the clone appended after the source.
+ */
+export function copyIpynbCell(
+  document: IpynbDocument,
+  cellId: CellId,
+  newCellId: CellId,
+): IpynbDocument {
+  const index = cellIndex(document, cellId)
+  validateCellId(newCellId, 'duplicated cell id')
+  if (document.cells.some(cell => cell.id === newCellId)) {
+    throw new IpynbFormatError(`cell id ${JSON.stringify(newCellId)} is already present`)
+  }
+  const source = document.cells[index] as IpynbCell
+  const cells = [...document.cells]
+  cells.splice(index + 1, 0, cloneCell(source, newCellId))
+  return { ...document, cells }
+}
+
 /**
  * Replace one code cell's execution count and outputs.
  * @param document - parsed notebook document.

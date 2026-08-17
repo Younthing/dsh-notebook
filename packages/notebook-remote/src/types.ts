@@ -251,6 +251,28 @@ export interface NotebookInsertCellRequest {
   readonly source?: string
 }
 
+/** Cell deletion input. */
+export interface NotebookDeleteCellRequest {
+  readonly sessionId: string
+  readonly notebookId: NotebookId
+  readonly cellId: CellId
+}
+
+/** Cell reordering input. */
+export interface NotebookMoveCellRequest {
+  readonly sessionId: string
+  readonly notebookId: NotebookId
+  readonly cellId: CellId
+  readonly toIndex: number
+}
+
+/** Cell duplication input. */
+export interface NotebookCopyCellRequest {
+  readonly sessionId: string
+  readonly notebookId: NotebookId
+  readonly cellId: CellId
+}
+
 /** User-initiated cell execution input. */
 export interface NotebookRunCellRequest {
   readonly sessionId: string
@@ -290,6 +312,17 @@ export interface NotebookEditCellAck {
 /** Successful cell insertion acknowledgement. */
 export interface NotebookInsertCellAck {
   readonly cellId: CellId
+  readonly document: NotebookDocument
+}
+
+/** Successful cell duplication acknowledgement. */
+export interface NotebookCopyCellAck {
+  readonly cellId: CellId
+  readonly document: NotebookDocument
+}
+
+/** Successful cell deletion or reordering acknowledgement. */
+export interface NotebookCellMutationAck {
   readonly document: NotebookDocument
 }
 

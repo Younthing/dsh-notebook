@@ -303,6 +303,17 @@ const _deepseek_ai_dsh_notebook_remote_notebooks_discover_result$schema = z.unio
   'partial': z.boolean().readonly(),
 }).readonly(),
 })])
+const _deepseek_ai_dsh_notebook_remote_notebooks_deleteCell_parameter_0$schema = z.object({
+  'sessionId': z.string().readonly(),
+  'notebookId': z.string().readonly(),
+  'cellId': z.string().readonly(),
+})
+const _deepseek_ai_dsh_notebook_remote_notebooks_moveCell_parameter_0$schema = z.object({
+  'sessionId': z.string().readonly(),
+  'notebookId': z.string().readonly(),
+  'cellId': z.string().readonly(),
+  'toIndex': z.number().readonly(),
+})
 const _deepseek_ai_dsh_notebook_remote_notebooks_editCell_parameter_0$schema = z.object({
   'sessionId': z.string().readonly(),
   'notebookId': z.string().readonly(),
@@ -893,6 +904,85 @@ export const TYPERT = {
         schema: _deepseek_ai_dsh_notebook_remote_notebooks_insertCell_result$schema,
       },
       sourceLocation: {"file":"packages/notebook-remote/src/index.ts","line":535,"column":9},
+    },
+
+    {
+      id: '@younthing/dsh-notebook-remote#notebooks/deleteCell',
+      service: 'notebookRemote',
+      namespace: 'notebooks',
+      method: 'deleteCell',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'request',
+          wire: 'request',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookDeleteCellRequest',
+            schema: _deepseek_ai_dsh_notebook_remote_notebooks_deleteCell_parameter_0$schema,
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookRemoteResult',
+        schema: _deepseek_ai_dsh_notebook_remote_notebooks_editCell_result$schema,
+      },
+      sourceLocation: {"file":"packages/notebook-remote/src/index.ts","line":565,"column":7},
+    },
+    {
+      id: '@younthing/dsh-notebook-remote#notebooks/moveCell',
+      service: 'notebookRemote',
+      namespace: 'notebooks',
+      method: 'moveCell',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'request',
+          wire: 'request',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookMoveCellRequest',
+            schema: _deepseek_ai_dsh_notebook_remote_notebooks_moveCell_parameter_0$schema,
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookRemoteResult',
+        schema: _deepseek_ai_dsh_notebook_remote_notebooks_editCell_result$schema,
+      },
+      sourceLocation: {"file":"packages/notebook-remote/src/index.ts","line":595,"column":7},
+    },
+    {
+      id: '@younthing/dsh-notebook-remote#notebooks/copyCell',
+      service: 'notebookRemote',
+      namespace: 'notebooks',
+      method: 'copyCell',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'request',
+          wire: 'request',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookCopyCellRequest',
+            schema: _deepseek_ai_dsh_notebook_remote_notebooks_deleteCell_parameter_0$schema,
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@younthing/dsh-notebook-remote/types#NotebookRemoteResult',
+        schema: _deepseek_ai_dsh_notebook_remote_notebooks_insertCell_result$schema,
+      },
+      sourceLocation: {"file":"packages/notebook-remote/src/index.ts","line":625,"column":7},
     },
     {
       id: '@younthing/dsh-notebook-remote#notebooks/installPython',

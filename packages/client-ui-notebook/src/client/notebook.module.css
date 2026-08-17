@@ -131,7 +131,7 @@
 
 .candidateRow {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   min-height: 42px;
@@ -141,6 +141,30 @@
   background: var(--dsw-alias-bg-layer-1);
   content-visibility: auto;
   contain-intrinsic-size: auto 44px;
+}
+
+.candidateSelect {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-markdown-code-block-small);
+  cursor: pointer;
+  text-align: left;
+}
+
+.candidateSelect:hover {
+  color: var(--dsw-alias-label-primary-bluish);
+}
+
+.candidateSelect:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .candidateRow:focus-within,
@@ -170,8 +194,10 @@
   font: var(--dsw-font-markdown-small);
 }
 
-.openExisting > summary {
-  cursor: pointer;
+.openExistingTitle {
+  margin: 0;
+  font: var(--dsw-font-markdown-small);
+  font-weight: 600;
 }
 
 .openExisting > .openForm {
@@ -233,9 +259,20 @@
 .environmentAction {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.confirmRow {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-3);
 }
 
 .emptyIcon {
@@ -311,6 +348,9 @@
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   flex-shrink: 0;
@@ -320,17 +360,21 @@
   padding: 9px 12px;
   border-bottom: 1px solid var(--dsw-alias-border-l1);
   background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-shadow-lv1);
   box-sizing: border-box;
 }
 
 .pathValue {
   min-width: 0;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
   font: var(--dsw-font-markdown-code-block-small);
   color: var(--dsw-alias-label-primary);
+  user-select: all;
 }
 
 .kernel {
@@ -344,15 +388,46 @@
   font: var(--dsw-font-markdown-code-block-small);
 }
 
+.kernelLabel {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .kernelStatus {
   color: var(--dsw-alias-label-caption);
+  white-space: nowrap;
 }
 
 .headerActions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.headerControls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.headerDivider {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: var(--dsw-alias-border-l2);
+}
+
+.notebookNotices:not(:empty) {
+  display: grid;
   gap: 4px;
+  padding: 4px 12px 0;
 }
 
 .cells {
@@ -433,7 +508,7 @@
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.62;
   transition:
     opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out),
     background var(--ds-transition-duration-fast) var(--ds-ease-in-out),
@@ -463,6 +538,57 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+}
+
+.cellActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin-top: 4px;
+  opacity: 0.72;
+  transition: opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.cell:hover .cellActions,
+.cell:focus-within .cellActions,
+.cell[data-selected] .cellActions {
+  opacity: 1;
+}
+
+.cellAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.cellAction:hover,
+.cellAction:focus-visible {
+  background: var(--dsw-alias-button-primary-fill);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.cellAction:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.cellActionDanger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.cellActionDanger:hover,
+.cellActionDanger:focus-visible {
+  background: var(--dsw-alias-state-error-primary);
+  color: var(--dsw-alias-label-primary-foreground);
 }
 
 .prompt {
@@ -598,7 +724,7 @@
   background: var(--dsw-alias-bg-layer-2);
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.62;
 }
 
 .markdownPreview:hover .markdownEdit,
@@ -769,7 +895,7 @@
   justify-content: center;
   gap: 8px;
   position: relative;
-  height: 20px;
+  min-height: 28px;
   margin: 0 8px 0 60px;
 }
 
@@ -780,22 +906,22 @@
   right: 0;
   height: 1px;
   background: var(--dsw-alias-state-business-primary);
-  opacity: 0;
+  opacity: 0.35;
   transition: opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out);
 }
 
 .insertHit {
   position: relative;
   z-index: 1;
-  height: 22px;
-  padding: 0 8px;
+  height: 24px;
+  padding: 0 10px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-secondary);
   font: var(--dsw-font-markdown-code-block-small);
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.72;
   transition: opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out);
 }
 
@@ -805,7 +931,7 @@
 
 .insert:hover::before,
 .insert:focus-within::before {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .insert:hover .insertHit,

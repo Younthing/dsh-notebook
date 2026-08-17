@@ -127,6 +127,34 @@ export function foldNotebooks(events: readonly SessionEvent[], seedLength = 0): 
             cell.source = data.source
             break
           }
+          case 'delete': {
+            const target = notebook.cells[data.index]
+            if (target === undefined || target.id !== data.cellId) {
+              throw new NotebookLogError(`notebook cell delete index ${String(data.index)} does not reference ${JSON.stringify(data.cellId)}`)
+            }
+            notebook.cells.splice(data.index, 1)
+            break
+          }
+          case 'move': {
+            const fromIndex = data.fromIndex
+            const toIndex = data.toIndex
+            if (fromIndex === undefined || toIndex === undefined) {
+              throw new NotebookLogError('notebook cell move must carry fromIndex and toIndex')
+            }
+            if (!Number.isSafeInteger(fromIndex) || fromIndex < 0 || fromIndex >= notebook.cells.length) {
+              throw new NotebookLogError(`notebook cell move fromIndex ${String(fromIndex)} is out of range`)
+            }
+            if (!Number.isSafeInteger(toIndex) || toIndex < 0 || toIndex >= notebook.cells.length) {
+              throw new NotebookLogError(`notebook cell move toIndex ${String(toIndex)} is out of range`)
+            }
+            const source = notebook.cells[fromIndex]
+            if (source === undefined || source.id !== data.cellId) {
+              throw new NotebookLogError(`notebook cell move fromIndex ${String(fromIndex)} does not reference ${JSON.stringify(data.cellId)}`)
+            }
+            notebook.cells.splice(fromIndex, 1)
+            notebook.cells.splice(toIndex, 0, source)
+            break
+          }
           default:
             throw new NotebookLogError(`unknown notebook cell operation ${JSON.stringify(data.operation)}`)
         }

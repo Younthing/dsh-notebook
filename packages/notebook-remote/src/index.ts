@@ -37,6 +37,10 @@ import type {
   NotebookDiscoverRequest,
   NotebookDiscoveryPage,
   NotebookDocument,
+  NotebookCellMutationAck,
+  NotebookCopyCellAck,
+  NotebookCopyCellRequest,
+  NotebookDeleteCellRequest,
   NotebookEditCellAck,
   NotebookEditCellRequest,
   NotebookEnvironmentCatalog,
@@ -44,6 +48,7 @@ import type {
   NotebookIdentityRequest,
   NotebookInsertCellAck,
   NotebookInsertCellRequest,
+  NotebookMoveCellRequest,
   NotebookInstallPythonRequest,
   NotebookInterruptAck,
   NotebookInterruptRequest,
@@ -556,6 +561,77 @@ export class NotebookRemoteService extends TypertRemoteService {
       )
       const inserted = document.cells.find(cell => !before.has(cell.id))
       if (inserted === undefined) throw new Error('inserted notebook cell is missing after append')
+      return { cellId: inserted.id, document }
+    }, signal)
+  }
+
+  /** Delete one cell. */
+  @Remote
+  async deleteCell(
+    request: NotebookDeleteCellRequest,
+    signal: AbortSignal,
+  ): Promise<NotebookRemoteResult<NotebookCellMutationAck>> {
+    const agentAccess = await this.agentFor(request.sessionId)
+    if (!agentAccess.ok) return agentAccess
+    const agent = agentAccess.value
+    const notebooks = this.notebooksFor(agent)
+    if (!notebooks.ok) return notebooks
+    return await this.execute(async () => {
+      const document = await notebooks.value.deleteCell(
+        agent.session,
+        NotebookId(request.notebookId),
+        CellId(request.cellId),
+        signal,
+      )
+      return { document }
+    }, signal)
+  }
+
+  /** Move one cell to another zero-based index. */
+  @Remote
+  async moveCell(
+    request: NotebookMoveCellRequest,
+    signal: AbortSignal,
+  ): Promise<NotebookRemoteResult<NotebookCellMutationAck>> {
+    const agentAccess = await this.agentFor(request.sessionId)
+    if (!agentAccess.ok) return agentAccess
+    const agent = agentAccess.value
+    const notebooks = this.notebooksFor(agent)
+    if (!notebooks.ok) return notebooks
+    return await this.execute(async () => {
+      const document = await notebooks.value.moveCell(
+        agent.session,
+        NotebookId(request.notebookId),
+        CellId(request.cellId),
+        request.toIndex,
+        signal,
+      )
+      return { document }
+    }, signal)
+  }
+
+  /** Duplicate one cell immediately after the source. */
+  @Remote
+  async copyCell(
+    request: NotebookCopyCellRequest,
+    signal: AbortSignal,
+  ): Promise<NotebookRemoteResult<NotebookCopyCellAck>> {
+    const agentAccess = await this.agentFor(request.sessionId)
+    if (!agentAccess.ok) return agentAccess
+    const agent = agentAccess.value
+    const notebooks = this.notebooksFor(agent)
+    if (!notebooks.ok) return notebooks
+    return await this.execute(async () => {
+      const notebookId = NotebookId(request.notebookId)
+      const before = new Set(notebooks.value.get(agent.session, notebookId).cells.map(cell => cell.id))
+      const document = await notebooks.value.copyCell(
+        agent.session,
+        notebookId,
+        CellId(request.cellId),
+        signal,
+      )
+      const inserted = document.cells.find(cell => !before.has(cell.id))
+      if (inserted === undefined) throw new Error('duplicated notebook cell is missing after append')
       return { cellId: inserted.id, document }
     }, signal)
   }

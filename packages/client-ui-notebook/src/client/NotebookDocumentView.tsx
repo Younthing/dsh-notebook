@@ -1,4 +1,4 @@
-import { memo, type ReactNode, useLayoutEffect, useRef } from 'react'
+import { memo, type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import type {
   CellId,
   CellType,
@@ -8,7 +8,8 @@ import type {
 } from '@younthing/dsh-notebook-core/types'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  Button, IconCheckOutline14, IconTriangleRightFill14, StateDot,
+  Button, IconCheckOutline14, IconChevronDownOutline14, IconChevronUpOutline14,
+  IconCopyOutline16, IconTrashOutline16, IconTriangleRightFill14, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { StateDotState } from '@deepseek-ai/dsh-client-ui-primitives'
 import { CellEditor } from './CellEditor.tsx'
@@ -68,7 +69,7 @@ function InsertBar({
   readonly t: PropsLocale<'notebook'>['t']
 }) {
   return (
-    <div className={css.insert}>
+    <div className={css.insert} role="group" aria-label={t('cell.insertLabel')}>
       <button type="button" className={css.insertHit} disabled={disabled} onClick={() => { onInsert('code') }}>
         {t('cell.insertCode')}
       </button>
@@ -97,6 +98,9 @@ export interface NotebookDocumentViewProps {
   readonly onDraft: (cellId: CellId, durableSource: string, value: string) => void
   readonly onCommit: (cellId: CellId, durableSource: string, value: string) => void
   readonly onRun: (cellId: CellId, source: string) => Promise<boolean>
+  readonly onDeleteCell: (cellId: CellId) => void
+  readonly onMoveCell: (cellId: CellId, toIndex: number) => void
+  readonly onCopyCell: (cellId: CellId) => void
   readonly onInsert: (afterCellId: CellId | undefined, cellType: CellType) => void
   readonly onInterrupt: () => void
   readonly onReload: () => void
@@ -114,10 +118,13 @@ export interface NotebookDocumentViewProps {
  */
 export const NotebookDocumentView = memo(function NotebookDocumentView({
   document, runtime, environmentCard, protocolLocked, selectedCellKey, actionFor,
-  scrollTop, draftFor, onSelectCell, onScrollTopChange, onDraft, onCommit, onRun, onInsert, onInterrupt,
-  onReload, onRestart, loadAttachment, outputLabels, formatOmitted, t,
+  scrollTop, draftFor, onSelectCell, onScrollTopChange, onDraft, onCommit, onRun, onDeleteCell,
+  onMoveCell, onCopyCell, onInsert, onInterrupt, onReload, onRestart, loadAttachment, outputLabels,
+  formatOmitted, t,
 }: NotebookDocumentViewProps) {
   const cellsRef = useRef<HTMLDivElement>(null)
+  const [runAllProgress, setRunAllProgress] = useState<{ readonly done: number; readonly total: number } | undefined>()
+  const [deleteConfirmKey, setDeleteConfirmKey] = useState<string>()
   useLayoutEffect(() => {
     const node = cellsRef.current
     if (node !== null) node.scrollTop = scrollTop
@@ -140,70 +147,107 @@ export const NotebookDocumentView = memo(function NotebookDocumentView({
   const kernelLabel = document.kernel === undefined
     ? t('kernel.noEnvironment')
     : `${document.kernel.kernelName ?? document.kernel.backend} #${String(document.kernel.generation)}`
+  const runAllRunning = runAllProgress !== undefined
+  const runAllLabel = runAllRunning
+    ? `${t('cell.runAll')} ${String(runAllProgress.done)}/${String(runAllProgress.total)}`
+    : t('cell.runAll')
 
   return (
     <section className={css.notebook} aria-label={document.path}>
-      <header className={css.header}>
-        <span className={css.pathValue}>{document.path}</span>
+        <header className={css.header}>
+        <span className={css.pathValue} title={document.path}>{document.path}</span>
         <div className={css.headerActions} role="toolbar" aria-label={t('view.notebook')}>
           <span className={css.kernel} role="status" aria-live="polite">
             <StateDot state={kernelDot(runtime, document.cells)} />
-            {kernelLabel}
+            <span className={css.kernelLabel}>{kernelLabel}</span>
             <span className={css.kernelStatus}>{runtimeLabel(runtime, t)}</span>
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={executionDisabled || codeCells.length === 0}
-            onClick={() => {
-              void (async () => {
-                for (const cell of codeCells) {
-                  const didRun = await onRun(cell.id, draftFor(cell.id, cell.source))
-                  if (!didRun) break
-                }
-              })()
-            }}
-          >
-            {t('cell.runAll')}
-          </Button>
-          {running
-            ? (
-              <Button variant="outline" size="sm" disabled={interrupting || protocolLocked} onClick={onInterrupt}>
-                {t('cell.interrupt')}
-              </Button>
-            )
-            : null}
-          <Button variant="outline" size="sm" disabled={protocolLocked || reloading || operationBusy} onClick={onReload}>
-            {t('cell.reload')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={protocolLocked || document.kernel === undefined || restarting || operationBusy}
-            onClick={onRestart}
-          >
-            {t('cell.restart')}
-          </Button>
+          <span className={css.headerControls}>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={executionDisabled || codeCells.length === 0 || runAllRunning}
+              onClick={() => {
+                void (async () => {
+                  setRunAllProgress({ done: 0, total: codeCells.length })
+                  try {
+                    for (const cell of codeCells) {
+                      const didRun = await onRun(cell.id, draftFor(cell.id, cell.source))
+                      if (!didRun) break
+                      setRunAllProgress(current => current === undefined
+                        ? undefined
+                        : { done: Math.min(current.total, current.done + 1), total: current.total })
+                    }
+                  } finally {
+                    setRunAllProgress(undefined)
+                  }
+                })()
+              }}
+            >
+              {runAllLabel}
+              {runAllRunning ? <span className={css.srOnly} role="status">{t('cell.runAllInProgress')}</span> : null}
+            </Button>
+            {running
+              ? (
+                <Button variant="outline" size="sm" disabled={interrupting || protocolLocked} onClick={onInterrupt}>
+                  {t('cell.interrupt')}
+                </Button>
+              )
+              : null}
+            <span className={css.headerDivider} aria-hidden />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={protocolLocked || reloading || operationBusy}
+              title={t('cell.reloadTitle')}
+              onClick={onReload}
+            >
+              {t('cell.reload')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={protocolLocked || document.kernel === undefined || restarting || operationBusy}
+              title={t('cell.restartTitle')}
+              onClick={onRestart}
+            >
+              {t('cell.restart')}
+            </Button>
+          </span>
         </div>
       </header>
-      {environmentCard}
+    {environmentCard}
+    <div className={css.notebookNotices}>
       <NotebookOperationNotice state={actionFor(insertKey)} t={t} />
       <NotebookOperationNotice state={actionFor(interruptKey)} t={t} />
       <NotebookOperationNotice state={actionFor(reloadKey)} t={t} />
       <NotebookOperationNotice state={actionFor(restartKey)} t={t} />
+    </div>
       <div
         ref={cellsRef}
         className={css.cells}
         onScroll={(event) => { onScrollTopChange(event.currentTarget.scrollTop) }}
       >
         <InsertBar disabled={inserting || protocolLocked} onInsert={(cellType) => { onInsert(undefined, cellType) }} t={t} />
-        {document.cells.map((cell) => {
+        {document.cells.map((cell, cellIndex) => {
           const key = cellKey(notebookId, String(cell.id))
           const source = draftFor(cell.id, cell.source)
           const editState = actionFor(`edit:${key}`)
           const runState = actionFor(`run:${key}`)
+          const copyState = actionFor(`copy:${key}`)
+          const moveState = actionFor(`move:${key}`)
+          const deleteState = actionFor(`delete:${key}`)
+          const mutating = editState?.phase === 'pending'
+            || runState?.phase === 'pending'
+            || copyState?.phase === 'pending'
+            || moveState?.phase === 'pending'
+            || deleteState?.phase === 'pending'
           const saving = editState?.phase === 'pending'
           const cellRunning = runState?.phase === 'pending' || cell.status === 'running'
+          const firstPending = [editState, runState, copyState, moveState, deleteState]
+            .find(state => state?.phase === 'pending')
+          const operationState = firstPending ?? runState ?? editState
+            ?? copyState ?? moveState ?? deleteState
           return (
             <div key={key}>
               <div
@@ -227,8 +271,8 @@ export const NotebookDocumentView = memo(function NotebookDocumentView({
                           type="button"
                           className={css.run}
                           aria-label={t('cell.run')}
-                          aria-keyshortcuts="Shift+Enter"
-                          title={t('cell.shortcut')}
+                          aria-keyshortcuts="Shift+Enter Ctrl+Enter Meta+Enter"
+                          title={t('cell.shortcutTitle')}
                           disabled={executionDisabled}
                           onClick={(event) => {
                             event.stopPropagation()
@@ -287,6 +331,68 @@ export const NotebookDocumentView = memo(function NotebookDocumentView({
                           />
                         )}
                   </div>
+                  <div className={css.cellActions} role="group" aria-label={t('cell.actions')}>
+                    <button
+                      type="button"
+                      className={css.cellAction}
+                      aria-label={t('cell.moveUp')}
+                      title={t('cell.moveUp')}
+                      disabled={mutating || cellIndex === 0}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setDeleteConfirmKey(undefined)
+                        onMoveCell(cell.id, cellIndex - 1)
+                      }}
+                    >
+                      <IconChevronUpOutline14 />
+                    </button>
+                    <button
+                      type="button"
+                      className={css.cellAction}
+                      aria-label={t('cell.moveDown')}
+                      title={t('cell.moveDown')}
+                      disabled={mutating || cellIndex === document.cells.length - 1}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setDeleteConfirmKey(undefined)
+                        onMoveCell(cell.id, cellIndex + 1)
+                      }}
+                    >
+                      <IconChevronDownOutline14 />
+                    </button>
+                    <button
+                      type="button"
+                      className={css.cellAction}
+                      aria-label={t('cell.copy')}
+                      title={t('cell.copy')}
+                      disabled={mutating}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setDeleteConfirmKey(undefined)
+                        onCopyCell(cell.id)
+                      }}
+                    >
+                      <IconCopyOutline16 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${css.cellAction} ${deleteConfirmKey === key ? css.cellActionDanger : ''}`}
+                      aria-label={deleteConfirmKey === key ? t('cell.deleteConfirm') : t('cell.delete')}
+                      title={deleteConfirmKey === key ? t('cell.deleteConfirm') : t('cell.delete')}
+                      disabled={mutating || document.cells.length <= 1}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (deleteConfirmKey !== key) {
+                          setDeleteConfirmKey(key)
+                          return
+                        }
+                        setDeleteConfirmKey(undefined)
+                        onDeleteCell(cell.id)
+                      }}
+                    >
+                      <IconTrashOutline16 size={14} />
+                    </button>
+                  </div>
                   {cell.outputs.length > 0
                     ? (
                       <div className={css.outputs}>
@@ -305,7 +411,7 @@ export const NotebookDocumentView = memo(function NotebookDocumentView({
                       </div>
                     )
                     : null}
-                  <NotebookOperationNotice state={editState?.phase === 'pending' ? editState : runState ?? editState} t={t} />
+                  <NotebookOperationNotice state={operationState} t={t} />
                   <span className={css.srOnly} role="status">
                     {t(cellRunning
                       ? 'status.running'

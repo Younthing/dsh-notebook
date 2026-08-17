@@ -45,6 +45,7 @@ export type NotebookErrorCode =
   | 'DISCOVERY_CURSOR_STALE'
   | 'DISCOVERY_UNAVAILABLE'
   | 'ENVIRONMENT_REQUIRED'
+  | 'INVALID_INPUT'
   | 'KERNEL_UNAVAILABLE'
   | 'NO_BACKEND'
   | 'NOT_FOUND'
@@ -199,10 +200,14 @@ export interface NotebookCellEvent {
   readonly cellType: CellType
   /** Cell source after the mutation. */
   readonly source: string
-  /** Zero-based insertion index for create operations. */
+  /** Zero-based cell index for create, update, and delete operations. */
   readonly index: number
-  /** Whether the event creates or updates a cell. */
-  readonly operation: 'create' | 'update'
+  /** Source index before the cell was moved to {@link toIndex}. */
+  readonly fromIndex?: number
+  /** Destination index after the moved cell was removed from its source position. */
+  readonly toIndex?: number
+  /** Whether the event creates, updates, deletes, or moves a cell. */
+  readonly operation: 'create' | 'update' | 'delete' | 'move'
   /** Imported execution count for a created code cell. */
   readonly executionCount?: number
   /** Imported outputs for a created code cell. */

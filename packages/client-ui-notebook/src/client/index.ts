@@ -165,6 +165,21 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
           ...(afterCellId === undefined ? {} : { afterCellId }),
         })).document)
       },
+      deleteCell: async (notebookId: NotebookId, cellId: CellId) => {
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.deleteCell({ sessionId, notebookId, cellId }),
+        ).document)
+      },
+      moveCell: async (notebookId: NotebookId, cellId: CellId, toIndex: number) => {
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.moveCell({ sessionId, notebookId, cellId, toIndex }),
+        ).document)
+      },
+      copyCell: async (notebookId: NotebookId, cellId: CellId) => {
+        return notebookDocument(unwrap(
+          await ctx.remote.notebooks.copyCell({ sessionId, notebookId, cellId }),
+        ).document)
+      },
       runCell: async (notebookId: NotebookId, cellId: CellId, source: string) => {
         const result = unwrap(await ctx.remote.notebooks.runCell({
           sessionId, notebookId, cellId, source,

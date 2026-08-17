@@ -48,7 +48,7 @@ export function MarkdownCell({
         ref={editorRef}
         className={css.markdownEditor}
         value={value}
-        rows={Math.max(3, lines)}
+        rows={Math.max(2, lines)}
         aria-label={label}
         disabled={disabled}
         onChange={(event) => { onChange(event.target.value) }}

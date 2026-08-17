@@ -16,7 +16,14 @@ import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import { deadline, MAX_TIMER_DELAY_MS, timeoutOf } from '@deepseek-ai/dsh-timeout'
 import { CellId, ExecutionId, NotebookFileVersion, NotebookId } from './brand.ts'
 import { foldNotebooks } from './fold.ts'
-import { insertIpynbCell, replaceIpynbCellExecution, replaceIpynbCellSource } from './ipynb.ts'
+import {
+  copyIpynbCell,
+  insertIpynbCell,
+  moveIpynbCell,
+  removeIpynbCell,
+  replaceIpynbCellExecution,
+  replaceIpynbCellSource,
+} from './ipynb.ts'
 import type { IpynbDocument } from './ipynb.ts'
 import type {
   NotebookKernelBackend,
@@ -698,6 +705,182 @@ export class NotebookService extends Service {
       })
     } finally {
       runtime.reservedIds.delete(cellId)
+    }
+  }
+
+  /**
+   * Delete one cell from its notebook.
+   * @param session - exact owning session instance.
+   * @param notebookId - target notebook identity.
+   * @param cellId - target cell identity.
+   * @param signal - optional cancellation for queue wait, read, and CAS write.
+   * @returns the updated folded document.
+   */
+  async deleteCell(
+    session: Session,
+    notebookId: NotebookId,
+    cellId: CellId,
+    signal?: AbortSignal,
+  ): Promise<NotebookDocument> {
+    const runtime = this.runtimeFor(session)
+    const initial = this.requireNotebook(session, notebookId)
+    const current = this.requireCell(initial, cellId)
+    if (initial.cells.length <= 1) {
+      throw new NotebookError('a notebook must retain at least one cell', 'INVALID_INPUT')
+    }
+    using operation = deadline(
+      this.runtimeSignal(runtime, signal),
+      this.config.executionTimeoutMs,
+      'NOTEBOOK_FILE_MUTATION_TIMEOUT',
+    )
+    const policy = this.ctx.sandboxPolicy.resolve({ session })
+    return await this.enqueueDocument(runtime, notebookId, operation.signal, async (taskSignal) => {
+      const notebook = this.requireNotebook(session, notebookId)
+      const index = notebook.cells.findIndex(entry => entry.id === cellId)
+      if (index === -1) throw new NotebookError(`unknown notebook cell ${cellId}`, 'NOT_FOUND')
+      const file = await this.refreshFile(runtime, notebook, taskSignal)
+      const document = removeIpynbCell(file.document, cellId)
+      const candidate: NotebookEventSpec = {
+        type: 'notebook/cell',
+        data: {
+          notebookId,
+          cellId,
+          cellType: current.cellType,
+          source: current.source,
+          index,
+          operation: 'delete',
+          fileVersion: CANDIDATE_FILE_VERSION,
+        },
+      }
+      return await this.commitCellMutation(
+        runtime,
+        file,
+        document,
+        candidate,
+        policy,
+        taskSignal,
+      )
+    })
+  }
+
+  /**
+   * Move one cell to another zero-based index in the same notebook.
+   * @param session - exact owning session instance.
+   * @param notebookId - target notebook identity.
+   * @param cellId - target cell identity.
+   * @param toIndex - destination index after removal of the source cell.
+   * @param signal - optional cancellation for queue wait, read, and CAS write.
+   * @returns the updated folded document.
+   */
+  async moveCell(
+    session: Session,
+    notebookId: NotebookId,
+    cellId: CellId,
+    toIndex: number,
+    signal?: AbortSignal,
+  ): Promise<NotebookDocument> {
+    const runtime = this.runtimeFor(session)
+    const initial = this.requireNotebook(session, notebookId)
+    const current = this.requireCell(initial, cellId)
+    using operation = deadline(
+      this.runtimeSignal(runtime, signal),
+      this.config.executionTimeoutMs,
+      'NOTEBOOK_FILE_MUTATION_TIMEOUT',
+    )
+    const policy = this.ctx.sandboxPolicy.resolve({ session })
+    return await this.enqueueDocument(runtime, notebookId, operation.signal, async (taskSignal) => {
+      const notebook = this.requireNotebook(session, notebookId)
+      const fromIndex = notebook.cells.findIndex(entry => entry.id === cellId)
+      if (fromIndex === -1) throw new NotebookError(`unknown notebook cell ${cellId}`, 'NOT_FOUND')
+      if (toIndex < 0 || toIndex >= notebook.cells.length) {
+        throw new NotebookError(`cell move index ${String(toIndex)} is out of range`, 'INVALID_INPUT')
+      }
+      if (fromIndex === toIndex) return notebook
+      const file = await this.refreshFile(runtime, notebook, taskSignal)
+      const document = moveIpynbCell(file.document, cellId, toIndex)
+      const candidate: NotebookEventSpec = {
+        type: 'notebook/cell',
+        data: {
+          notebookId,
+          cellId,
+          cellType: current.cellType,
+          source: current.source,
+          index: toIndex,
+          fromIndex,
+          toIndex,
+          operation: 'move',
+          fileVersion: CANDIDATE_FILE_VERSION,
+        },
+      }
+      return await this.commitCellMutation(
+        runtime,
+        file,
+        document,
+        candidate,
+        policy,
+        taskSignal,
+      )
+    })
+  }
+
+  /**
+   * Duplicate one cell immediately after the source, preserving its state.
+   * @param session - exact owning session instance.
+   * @param notebookId - target notebook identity.
+   * @param cellId - source cell identity.
+   * @param signal - optional cancellation for queue wait, read, and CAS write.
+   * @returns the updated folded document.
+   */
+  async copyCell(
+    session: Session,
+    notebookId: NotebookId,
+    cellId: CellId,
+    signal?: AbortSignal,
+  ): Promise<NotebookDocument> {
+    const runtime = this.runtimeFor(session)
+    const initial = this.requireNotebook(session, notebookId)
+    const current = this.requireCell(initial, cellId)
+    using operation = deadline(
+      this.runtimeSignal(runtime, signal),
+      this.config.executionTimeoutMs,
+      'NOTEBOOK_FILE_MUTATION_TIMEOUT',
+    )
+    const policy = this.ctx.sandboxPolicy.resolve({ session })
+    const newCellId = CellId(this.reserveId(runtime, 'cell'))
+    try {
+      return await this.enqueueDocument(runtime, notebookId, operation.signal, async (taskSignal) => {
+        const notebook = this.requireNotebook(session, notebookId)
+        const sourceIndex = notebook.cells.findIndex(entry => entry.id === cellId)
+        if (sourceIndex === -1) throw new NotebookError(`unknown notebook cell ${cellId}`, 'NOT_FOUND')
+        const file = await this.refreshFile(runtime, notebook, taskSignal)
+        const document = copyIpynbCell(file.document, cellId, newCellId)
+        const candidate: NotebookEventSpec = {
+          type: 'notebook/cell',
+          data: {
+            notebookId,
+            cellId: newCellId,
+            cellType: current.cellType,
+            source: current.source,
+            index: sourceIndex + 1,
+            operation: 'create',
+            metadata: current.metadata,
+            attachments: current.attachments,
+            ...current.cellType === 'code' ? { outputs: current.outputs } : {},
+            ...current.executionCount === undefined ? {} : { executionCount: current.executionCount },
+            fileVersion: CANDIDATE_FILE_VERSION,
+          },
+        }
+        return await this.commitCellMutation(
+          runtime,
+          file,
+          document,
+          candidate,
+          policy,
+          taskSignal,
+        )
+      })
+    } finally {
+      runtime.reservedIds.delete(newCellId)
     }
   }
 

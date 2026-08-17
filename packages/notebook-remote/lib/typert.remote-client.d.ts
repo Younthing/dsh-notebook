@@ -3,18 +3,21 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { NotebookAttachEnvironmentRequest, NotebookCreateEnvironmentRequest, NotebookCreateRequest, NotebookDiscoverRequest, NotebookDiscoveryPage, NotebookDocument, NotebookEditCellAck, NotebookEditCellRequest, NotebookEnvironmentCatalog, NotebookEnvironmentCatalogRequest, NotebookIdentityRequest, NotebookInsertCellAck, NotebookInsertCellRequest, NotebookInstallPythonRequest, NotebookInterruptAck, NotebookInterruptRequest, NotebookKernelAck, NotebookKernelRuntimeStatus, NotebookOpenRequest, NotebookReadAttachmentAck, NotebookReadAttachmentRequest, NotebookReloadAck, NotebookRemoteResult, NotebookRunAck, NotebookRunCellRequest, NotebookRuntimeStatusRequest, NotebookSessionRequest } from '@younthing/dsh-notebook-remote/types'
+import type { NotebookAttachEnvironmentRequest, NotebookCellMutationAck, NotebookCopyCellAck, NotebookCopyCellRequest, NotebookCreateEnvironmentRequest, NotebookCreateRequest, NotebookDeleteCellRequest, NotebookDiscoverRequest, NotebookDiscoveryPage, NotebookDocument, NotebookEditCellAck, NotebookEditCellRequest, NotebookEnvironmentCatalog, NotebookEnvironmentCatalogRequest, NotebookIdentityRequest, NotebookInsertCellAck, NotebookInsertCellRequest, NotebookInstallPythonRequest, NotebookInterruptAck, NotebookInterruptRequest, NotebookKernelAck, NotebookKernelRuntimeStatus, NotebookMoveCellRequest, NotebookOpenRequest, NotebookReadAttachmentAck, NotebookReadAttachmentRequest, NotebookReloadAck, NotebookRemoteResult, NotebookRunAck, NotebookRunCellRequest, NotebookRuntimeStatusRequest, NotebookSessionRequest } from '@younthing/dsh-notebook-remote/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$6e6f7465626f6f6b73 {
     attachEnvironment: (request: NotebookAttachEnvironmentRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDocument>>>
+    copyCell: (request: NotebookCopyCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCopyCellAck>>>
     create: (request: NotebookCreateRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDocument>>>
     createEnvironment: (request: NotebookCreateEnvironmentRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     discover: (request: NotebookDiscoverRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDiscoveryPage>>>
+    deleteCell: (request: NotebookDeleteCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCellMutationAck>>>
     editCell: (request: NotebookEditCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEditCellAck>>>
     environmentCatalog: (request: NotebookEnvironmentCatalogRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     insertCell: (request: NotebookInsertCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookInsertCellAck>>>
     installPython: (request: NotebookInstallPythonRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
+    moveCell: (request: NotebookMoveCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCellMutationAck>>>
     installUv: (request: NotebookSessionRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     interrupt: (request: NotebookInterruptRequest) => Promise<RemoteResult<NotebookRemoteResult<NotebookInterruptAck>>>
     open: (request: NotebookOpenRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDocument>>>
@@ -26,12 +29,15 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
   }
   interface TypertRemoteMap {
     'notebooks/attachEnvironment': (request: NotebookAttachEnvironmentRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDocument>>>
+    'notebooks/copyCell': (request: NotebookCopyCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCopyCellAck>>>
     'notebooks/create': (request: NotebookCreateRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDocument>>>
     'notebooks/createEnvironment': (request: NotebookCreateEnvironmentRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
+    'notebooks/deleteCell': (request: NotebookDeleteCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCellMutationAck>>>
     'notebooks/discover': (request: NotebookDiscoverRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookDiscoveryPage>>>
     'notebooks/editCell': (request: NotebookEditCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEditCellAck>>>
     'notebooks/environmentCatalog': (request: NotebookEnvironmentCatalogRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     'notebooks/insertCell': (request: NotebookInsertCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookInsertCellAck>>>
+    'notebooks/moveCell': (request: NotebookMoveCellRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookCellMutationAck>>>
     'notebooks/installPython': (request: NotebookInstallPythonRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     'notebooks/installUv': (request: NotebookSessionRequest, signal?: AbortSignal) => Promise<RemoteResult<NotebookRemoteResult<NotebookEnvironmentCatalog>>>
     'notebooks/interrupt': (request: NotebookInterruptRequest) => Promise<RemoteResult<NotebookRemoteResult<NotebookInterruptAck>>>

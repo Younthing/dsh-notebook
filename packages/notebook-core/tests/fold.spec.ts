@@ -284,4 +284,71 @@ describe('foldNotebooks', () => {
       'notebook kernel must reference the current fileVersion',
     )
   })
+
+  it('folds delete, move, and copy cell operations', () => {
+    const session = Session.create(SessionId('fold-cell-ops'))
+    const notebookId = NotebookId('notebook-1')
+    const first = CellId('cell-1')
+    const second = CellId('cell-2')
+    const third = CellId('cell-3')
+    session.append('notebook/open', {
+      notebookId,
+      path: 'ops.ipynb',
+      fileVersion: NotebookFileVersion('v1'),
+      nbformatMinor: 5,
+      metadata: {},
+    })
+    for (const [index, cellId] of [first, second, third].entries()) {
+      session.append('notebook/cell', {
+        notebookId,
+        cellId,
+        cellType: 'code',
+        source: `cell-${index + 1}`,
+        index,
+        operation: 'create',
+        metadata: {},
+        attachments: {},
+        outputs: [],
+        fileVersion: NotebookFileVersion('v1'),
+      })
+    }
+    // Copy the first cell after itself -> [first, copy, second, third].
+    session.append('notebook/cell', {
+      notebookId,
+      cellId: CellId('cell-1-copy'),
+      cellType: 'code',
+      source: 'cell-1',
+      index: 1,
+      operation: 'create',
+      metadata: {},
+      attachments: {},
+      outputs: [],
+      fileVersion: NotebookFileVersion('v2'),
+    })
+    // Move the copy to the end -> [first, second, third, copy].
+    session.append('notebook/cell', {
+      notebookId,
+      cellId: CellId('cell-1-copy'),
+      cellType: 'code',
+      source: 'cell-1',
+      index: 3,
+      fromIndex: 1,
+      toIndex: 3,
+      operation: 'move',
+      fileVersion: NotebookFileVersion('v3'),
+    })
+    // Delete the original first -> [second, third, copy].
+    session.append('notebook/cell', {
+      notebookId,
+      cellId: first,
+      cellType: 'code',
+      source: 'cell-1',
+      index: 0,
+      operation: 'delete',
+      fileVersion: NotebookFileVersion('v4'),
+    })
+    const folded = foldNotebooks(session.events)
+    expect(folded.notebooks[0]?.cells.map(cell => cell.id)).toEqual([second, third, CellId('cell-1-copy')])
+    expect(folded.notebooks[0]?.fileVersion).toBe(NotebookFileVersion('v4'))
+  })
 })

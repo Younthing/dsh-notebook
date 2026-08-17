@@ -173,6 +173,16 @@ export interface NotebookViewInjected {
   ) => Promise<NotebookKernelRuntimeStatus>
   /** Persist one cell's source text. */
   editCell: (notebookId: NotebookId, cellId: CellId, source: string) => Promise<NotebookDocument>
+  /** Delete one cell. */
+  deleteCell: (notebookId: NotebookId, cellId: CellId) => Promise<NotebookDocument>
+  /** Move one cell to another zero-based index. */
+  moveCell: (
+    notebookId: NotebookId,
+    cellId: CellId,
+    toIndex: number,
+  ) => Promise<NotebookDocument>
+  /** Duplicate one cell immediately after the source. */
+  copyCell: (notebookId: NotebookId, cellId: CellId) => Promise<NotebookDocument>
   /** Insert one cell after a stable predecessor. */
   insertCell: (
     notebookId: NotebookId,
@@ -213,7 +223,7 @@ export interface NotebookViewInjected {
 export function NotebookView({
   useSession, discoverNotebooks, openNotebook, createNotebook, environmentCatalog,
   installUv, installPython, createEnvironment, attachEnvironment, runtimeStatus,
-  editCell, insertCell, runCell, restartNotebook, reloadNotebook, interruptNotebook,
+  editCell, deleteCell, moveCell, copyCell, insertCell, runCell, restartNotebook, reloadNotebook, interruptNotebook,
   loadAttachment, loadOlder, replaceSession, closeNotebookPanel, t,
 }: PropsRuntime<'details'> & InjectFace<NotebookViewInjected> & PropsLocale<'notebook'>) {
   const openState = useSession(session => session.openState)
@@ -577,6 +587,37 @@ export function NotebookView({
     )
   }, [insertCell, perform, publishDocument])
 
+  const remove = useCallback(async (
+    notebookId: NotebookId,
+    cellId: CellId,
+  ): Promise<void> => {
+    const key = notebookCellKey(notebookId, cellId)
+    await perform(`delete:${key}`, `delete:${key}`, 'delete', async () => {
+      publishDocument(await deleteCell(notebookId, cellId))
+    })
+  }, [deleteCell, perform, publishDocument])
+
+  const move = useCallback(async (
+    notebookId: NotebookId,
+    cellId: CellId,
+    toIndex: number,
+  ): Promise<void> => {
+    const key = notebookCellKey(notebookId, cellId)
+    await perform(`move:${key}`, `move:${key}`, 'move', async () => {
+      publishDocument(await moveCell(notebookId, cellId, toIndex))
+    })
+  }, [moveCell, perform, publishDocument])
+
+  const copy = useCallback(async (
+    notebookId: NotebookId,
+    cellId: CellId,
+  ): Promise<void> => {
+    const key = notebookCellKey(notebookId, cellId)
+    await perform(`copy:${key}`, `copy:${key}`, 'copy', async () => {
+      publishDocument(await copyCell(notebookId, cellId))
+    })
+  }, [copyCell, perform, publishDocument])
+
   const restart = useCallback(async (notebookId: NotebookId): Promise<void> => {
     const key = `restart:${String(notebookId)}`
     await perform(`kernel:${String(notebookId)}`, key, 'restart', async () => {
@@ -886,6 +927,7 @@ export function NotebookView({
                 }}
                 onToggleLauncher={() => { setLauncherOpen(current => !current) }}
                 onClosePanel={() => {
+                  // Return focus to the session-header toggle after the panel closes.
                   const toggle = document.querySelector<HTMLElement>('[aria-controls="dsh-notebook-panel"]')
                   closeNotebookPanel()
                   toggle?.focus()
@@ -947,6 +989,9 @@ export function NotebookView({
                   void commit(activeNotebook.id, cellId, durableSource, value)
                 }}
                 onRun={(cellId, source) => run(activeNotebook.id, cellId, source)}
+                onDeleteCell={(cellId) => { void remove(activeNotebook.id, cellId) }}
+                onMoveCell={(cellId, toIndex) => { void move(activeNotebook.id, cellId, toIndex) }}
+                onCopyCell={(cellId) => { void copy(activeNotebook.id, cellId) }}
                 onInsert={(afterCellId, cellType) => { void insert(activeNotebook.id, afterCellId, cellType) }}
                 onInterrupt={() => { void interrupt(activeNotebook.id) }}
                 onReload={() => { void reload(activeNotebook.id) }}

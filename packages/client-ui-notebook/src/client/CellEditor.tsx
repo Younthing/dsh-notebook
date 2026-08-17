@@ -29,7 +29,7 @@ export function CellEditor({
       <textarea
         className={css.textarea}
         value={value}
-        rows={Math.max(3, lineCount)}
+        rows={Math.max(2, lineCount)}
         aria-label={label}
         disabled={disabled}
         spellCheck={false}
