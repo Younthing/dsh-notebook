@@ -56,7 +56,7 @@
   "dependencies": {
     "@younthing/dsh-notebook-core": "workspace:^",
     "@younthing/dsh-notebook-environment": "workspace:^",
-    "@deepseek-ai/schemastery": "3.18.1-rc.4",
+    "@deepseek-ai/schemastery": "3.18.1",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
