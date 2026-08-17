@@ -56,6 +56,14 @@ pnpm run publint
 pnpm run pack:verify
 ```
 
+For linked local development, run `pnpm run dev`. It performs one complete
+build, then keeps the TypeScript declaration output and every Host/browser
+bundle current. A Harness profile with Host HMR enabled can reload Host plugin
+changes from these outputs, while the Web client HMR chain reloads the rebuilt
+Notebook browser bundle. When a DeepSeek Harness checkout is adjacent to this
+repository, `pnpm run dev:dsh` starts both watchers and `dsh web` as one process
+group.
+
 Real Jupyter integration is opt-in and needs Python 3.12 plus Jupyter dependencies. Browser state restoration through Harness Session events is deferred until Harness publishes the required external-event API.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks, [SECURITY.md](SECURITY.md) for private vulnerability reporting, and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for bundled/runtime-acquired components.

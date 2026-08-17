@@ -12,6 +12,10 @@
   "scripts": {
     "build": "pnpm run build:types && tsdown && pnpm --filter @younthing/dsh-client-ui-notebook run bundle",
     "build:types": "tsc -b tsconfig.host.json && tsc -b tsconfig.client.json",
+    "dev": "pnpm run build && tsx scripts/dev.ts",
+    "dev:dsh": "pnpm run build && tsx scripts/dev.ts --harness ../deepseek-harness",
+    "watch:types": "tsc -b tsconfig.host.json tsconfig.client.json --watch --preserveWatchOutput",
+    "watch:bundles": "tsdown --watch",
     "clean": "rimraf coverage packages/*/lib",
     "typecheck": "tsc -b tsconfig.host.json tsconfig.client.json",
     "test": "vitest run",

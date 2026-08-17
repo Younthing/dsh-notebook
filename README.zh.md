@@ -56,6 +56,8 @@ pnpm run publint
 pnpm run pack:verify
 ```
 
+使用本地链接开发时，运行 `pnpm run dev`。它会先完成一次完整构建，随后持续更新 TypeScript 声明输出以及全部 Host／浏览器 bundle。启用了 Host HMR 的 Harness profile 可以从这些输出热重载 Host 插件改动；Web 客户端 HMR 链则会热重载重新构建的 Notebook 浏览器 bundle。当 DeepSeek Harness checkout 与本仓库相邻时，`pnpm run dev:dsh` 会把两个 watcher 和 `dsh web` 作为同一进程组一起启动。
+
 真实 Jupyter 集成测试是可选项，需要 Python 3.12 与 Jupyter 依赖。通过 Harness Session 事件恢复浏览器状态的能力会在 Harness 发布所需的外部事件 API 后加入。
 
 贡献检查见 [CONTRIBUTING.md](CONTRIBUTING.md)，漏洞私密报告方式见 [SECURITY.md](SECURITY.md)，随包或运行时获取的组件见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
