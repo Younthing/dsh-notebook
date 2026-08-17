@@ -251,6 +251,7 @@ export function NotebookView({
   const [environmentFlows, setEnvironmentFlows] = useState<ReadonlyMap<string, NotebookEnvironmentFlow>>(
     () => new Map(),
   )
+  const [environmentPickerNotebookId, setEnvironmentPickerNotebookId] = useState<string>()
   const [runtimeStatuses, setRuntimeStatuses] = useState<ReadonlyMap<string, NotebookKernelRuntimeStatus>>(
     () => new Map(),
   )
@@ -749,6 +750,7 @@ export function NotebookView({
     try {
       publishDocument(await attachEnvironment(notebookId, environmentId, operation.signal))
       if (operation.signal.aborted || environmentControllers.current.get(key) !== operation) return
+      setEnvironmentPickerNotebookId(current => current === key ? undefined : current)
     } catch (error: unknown) {
       if (operation.signal.aborted || isAbort(error)) return
       setEnvironmentFlow(notebookId, failedEnvironmentFlow(previous, error))
@@ -816,9 +818,12 @@ export function NotebookView({
 
   const activeNotebook = notebooks.find(notebook => notebook.id === activeNotebookId) ?? notebooks[0]
   useEffect(() => {
-    if (!historyReady || activeNotebook === undefined || activeNotebook.kernel !== undefined) return
+    if (!historyReady || activeNotebook === undefined) return
+    const pickerOpen = activeNotebook.kernel === undefined
+      || environmentPickerNotebookId === String(activeNotebook.id)
+    if (!pickerOpen) return
     if (!environmentFlows.has(String(activeNotebook.id))) void refreshEnvironment(activeNotebook.id)
-  }, [activeNotebook, environmentFlows, historyReady, refreshEnvironment])
+  }, [activeNotebook, environmentFlows, environmentPickerNotebookId, historyReady, refreshEnvironment])
 
   useEffect(() => () => {
     documentController.current?.abort()
@@ -861,6 +866,9 @@ export function NotebookView({
   const activeFlow = activeNotebook === undefined
     ? undefined
     : environmentFlows.get(String(activeNotebook.id)) ?? { phase: 'checking' as const }
+  const environmentOpen = activeNotebook !== undefined && (
+    activeNotebook.kernel === undefined || environmentPickerNotebookId === String(activeNotebook.id)
+  )
   const launcherProps: NotebookLauncherProps = {
     discovery: launcherDiscovery,
     createPath,
@@ -946,7 +954,16 @@ export function NotebookView({
               <NotebookDocumentView
                 document={activeNotebook}
                 runtime={activeRuntime}
-                environmentCard={activeNotebook.kernel === undefined && activeFlow !== undefined
+                environmentOpen={environmentOpen}
+                onToggleEnvironment={() => {
+                  const key = String(activeNotebook.id)
+                  if (activeNotebook.kernel === undefined) {
+                    void refreshEnvironment(activeNotebook.id)
+                    return
+                  }
+                  setEnvironmentPickerNotebookId(current => current === key ? undefined : key)
+                }}
+                environmentCard={environmentOpen && activeFlow !== undefined
                   ? (
                     <NotebookEnvironmentCard
                       flow={activeFlow}

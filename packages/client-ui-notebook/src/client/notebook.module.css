@@ -378,6 +378,8 @@
 }
 
 .kernel {
+  border: 0;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -386,6 +388,16 @@
   background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-secondary);
   font: var(--dsw-font-markdown-code-block-small);
+}
+
+.kernel:hover {
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+}
+
+.kernel:focus-visible {
+  outline: 2px solid var(--dsw-alias-label-primary-bluish);
+  outline-offset: 2px;
 }
 
 .kernelLabel {

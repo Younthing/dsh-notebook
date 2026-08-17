@@ -94,9 +94,13 @@ describe('ui-notebook tsdown client artifact', () => {
       closeDetails: vi.fn(),
     })
     ctx.provide('locale', { register: vi.fn(() => () => {}) })
+    const notebooks = {}
     ctx.provide('remote', {
-      notebooks: {},
-      $mount: vi.fn(async () => async () => {}),
+      notebooks,
+      $mount: vi.fn(async () => {
+        const dispose = ctx.reflect.provide('remote.notebooks', notebooks)
+        return async () => { dispose() }
+      }),
       $on: () => () => {},
     })
 

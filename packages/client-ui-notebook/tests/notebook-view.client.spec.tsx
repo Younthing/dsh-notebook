@@ -433,7 +433,10 @@ async function bench(notebooks?: {
   }
   ctx.provide('remote', {
     notebooks: api.notebooks,
-    $mount: vi.fn(async () => async () => {}),
+    $mount: vi.fn(async () => {
+      const dispose = ctx.reflect.provide('remote.notebooks', api.notebooks)
+      return async () => { dispose() }
+    }),
     $on: () => () => {},
   } as never)
   ctx.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
@@ -566,7 +569,36 @@ describe('NotebookView', () => {
     expect(disabled(screen.getByDisplayValue('value = 1'))).toBe(false)
     expect(disabled(screen.getByRole('button', { name: '运行' }))).toBe(true)
     expect(disabled(screen.getByRole('button', { name: '全部运行' }))).toBe(true)
+    expect(screen.getByRole('button', { name: '选择内核' }).getAttribute('aria-expanded')).toBe('true')
     expect(await screen.findByRole('button', { name: '安装 uv' })).toBeTruthy()
+  })
+
+  it('opens the kernel picker and switches an attached notebook environment', async () => {
+    const alternateId = EnvironmentId('workspace-venv-alt')
+    const environmentCatalog = vi.fn(async () => ({
+      manager: { status: 'ready' as const, version: '0.11.32', canInstall: true },
+      pythons: [{ id: 'python-3.12', version: '3.12', source: 'path' as const }],
+      environments: [{
+        id: alternateId,
+        displayName: 'Python 3.12 (.venv-alt)',
+        status: 'ready' as const,
+        pythonVersion: '3.12',
+        managed: true,
+      }],
+    }))
+    const attachEnvironment = vi.fn(async () => {})
+    render(<NotebookView {...viewProps({ environmentCatalog, attachEnvironment })} />)
+
+    const picker = screen.getByRole('button', { name: '选择或更改内核' })
+    expect(picker.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(picker)
+    expect(await screen.findByRole('button', { name: '使用 Python 3.12 (.venv-alt)' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '使用 Python 3.12 (.venv-alt)' }))
+    await waitFor(() => {
+      expect(attachEnvironment).toHaveBeenCalledWith(
+        NotebookId('notebook-1'), alternateId, expect.any(AbortSignal),
+      )
+    })
   })
 
   it('installs uv, provisions the fixed workspace environment, then attaches it', async () => {

@@ -88,6 +88,8 @@ export interface NotebookDocumentViewProps {
   readonly document: NotebookDocument
   readonly runtime: NotebookKernelRuntimeStatus
   readonly environmentCard: ReactNode
+  readonly environmentOpen: boolean
+  readonly onToggleEnvironment: () => void
   readonly protocolLocked: boolean
   readonly selectedCellKey: string | undefined
   readonly scrollTop: number
@@ -117,7 +119,7 @@ export interface NotebookDocumentViewProps {
  * @returns One document canvas with optional in-place environment recovery.
  */
 export const NotebookDocumentView = memo(function NotebookDocumentView({
-  document, runtime, environmentCard, protocolLocked, selectedCellKey, actionFor,
+  document, runtime, environmentCard, environmentOpen, onToggleEnvironment, protocolLocked, selectedCellKey, actionFor,
   scrollTop, draftFor, onSelectCell, onScrollTopChange, onDraft, onCommit, onRun, onDeleteCell,
   onMoveCell, onCopyCell, onInsert, onInterrupt, onReload, onRestart, loadAttachment, outputLabels,
   formatOmitted, t,
@@ -157,11 +159,18 @@ export const NotebookDocumentView = memo(function NotebookDocumentView({
         <header className={css.header}>
         <span className={css.pathValue} title={document.path}>{document.path}</span>
         <div className={css.headerActions} role="toolbar" aria-label={t('view.notebook')}>
-          <span className={css.kernel} role="status" aria-live="polite">
+          <button
+            type="button"
+            className={css.kernel}
+            aria-label={t(document.kernel === undefined ? 'kernel.select' : 'kernel.change')}
+            aria-expanded={environmentOpen}
+            aria-controls="notebook-environment-picker"
+            onClick={onToggleEnvironment}
+          >
             <StateDot state={kernelDot(runtime, document.cells)} />
             <span className={css.kernelLabel}>{kernelLabel}</span>
-            <span className={css.kernelStatus}>{runtimeLabel(runtime, t)}</span>
-          </span>
+            <span className={css.kernelStatus} aria-live="polite">{runtimeLabel(runtime, t)}</span>
+          </button>
           <span className={css.headerControls}>
             <Button
               variant="primary"

@@ -49,7 +49,7 @@ export function NotebookEnvironmentCard({
   const broken = catalog?.environments.find(item => item.status === 'broken')
 
   return (
-    <section className={css.environmentCard} aria-labelledby="notebook-environment-title">
+    <section id="notebook-environment-picker" className={css.environmentCard} aria-labelledby="notebook-environment-title">
       <div className={css.environmentHeading}>
         <StateDot state={flow.phase === 'failed' ? 'error' : busy || flow.phase === 'checking' ? 'ongoing' : 'warning'} />
         <div>

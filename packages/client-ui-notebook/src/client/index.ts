@@ -87,6 +87,11 @@ function decodeBase64(value: string): Uint8Array {
  */
 export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
   const disposeRemote = await ctx.remote.$mount(notebookRemote)
+  // This package owns the contribution, so the namespace does not exist until
+  // `$mount()` completes and cannot be a required dependency of the outer
+  // plugin. Resolve the newly mounted service once and capture that typed face.
+  const notebooks = ctx.get('remote.notebooks') as ClientContext['remote']['notebooks'] | undefined
+  if (notebooks === undefined) throw new Error('ui-notebook: mounted Remote namespace is unavailable')
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-notebook: dictionaries')
   registerNotebookConversationView(ctx)
   ctx.slots.inject(
@@ -109,31 +114,31 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
     priority: -1,
     locale: NS,
     inject: (sessionId: SessionId): NotebookViewInjected => ({
-      discoverNotebooks: async (after, signal) => unwrap(await ctx.remote.notebooks.discover({
+      discoverNotebooks: async (after, signal) => unwrap(await notebooks.discover({
         sessionId,
         ...(after === undefined ? {} : { after }),
       }, signal)),
       openNotebook: async (path, signal) => notebookDocument(
-        unwrap(await ctx.remote.notebooks.open({ sessionId, path }, signal)),
+        unwrap(await notebooks.open({ sessionId, path }, signal)),
       ),
       createNotebook: async (path, signal) => notebookDocument(
-        unwrap(await ctx.remote.notebooks.create({ sessionId, path }, signal)),
+        unwrap(await notebooks.create({ sessionId, path }, signal)),
       ),
       environmentCatalog: async signal => environmentCatalog(unwrap(
-        await ctx.remote.notebooks.environmentCatalog({ sessionId }, signal),
+        await notebooks.environmentCatalog({ sessionId }, signal),
       )),
       installUv: async signal => environmentCatalog(unwrap(
-        await ctx.remote.notebooks.installUv({ sessionId }, signal),
+        await notebooks.installUv({ sessionId }, signal),
       )),
       installPython: async signal => environmentCatalog(unwrap(
-        await ctx.remote.notebooks.installPython({ sessionId, version: '3.12' }, signal),
+        await notebooks.installPython({ sessionId, version: '3.12' }, signal),
       )),
       createEnvironment: async (
         environmentId: NotebookEnvironmentId,
         allowExisting: boolean,
         rebuild: boolean,
         signal: AbortSignal,
-      ) => environmentCatalog(unwrap(await ctx.remote.notebooks.createEnvironment({
+      ) => environmentCatalog(unwrap(await notebooks.createEnvironment({
         sessionId, environmentId, allowExisting, rebuild,
       }, signal))),
       attachEnvironment: async (
@@ -141,16 +146,16 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
         environmentId: NotebookEnvironmentId,
         signal: AbortSignal,
       ) => {
-        return notebookDocument(unwrap(await ctx.remote.notebooks.attachEnvironment({
+        return notebookDocument(unwrap(await notebooks.attachEnvironment({
           sessionId, notebookId, environmentId,
         }, signal)))
       },
       runtimeStatus: async (notebookId: NotebookId, signal: AbortSignal) => runtimeStatus(unwrap(
-        await ctx.remote.notebooks.runtimeStatus({ sessionId, notebookId }, signal),
+        await notebooks.runtimeStatus({ sessionId, notebookId }, signal),
       )),
       editCell: async (notebookId: NotebookId, cellId: CellId, source: string) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.editCell({ sessionId, notebookId, cellId, source }),
+          await notebooks.editCell({ sessionId, notebookId, cellId, source }),
         ).document)
       },
       insertCell: async (
@@ -158,7 +163,7 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
         afterCellId: CellId | undefined,
         cellType: CellType,
       ) => {
-        return notebookDocument(unwrap(await ctx.remote.notebooks.insertCell({
+        return notebookDocument(unwrap(await notebooks.insertCell({
           sessionId,
           notebookId,
           cellType,
@@ -167,21 +172,21 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
       },
       deleteCell: async (notebookId: NotebookId, cellId: CellId) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.deleteCell({ sessionId, notebookId, cellId }),
+          await notebooks.deleteCell({ sessionId, notebookId, cellId }),
         ).document)
       },
       moveCell: async (notebookId: NotebookId, cellId: CellId, toIndex: number) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.moveCell({ sessionId, notebookId, cellId, toIndex }),
+          await notebooks.moveCell({ sessionId, notebookId, cellId, toIndex }),
         ).document)
       },
       copyCell: async (notebookId: NotebookId, cellId: CellId) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.copyCell({ sessionId, notebookId, cellId }),
+          await notebooks.copyCell({ sessionId, notebookId, cellId }),
         ).document)
       },
       runCell: async (notebookId: NotebookId, cellId: CellId, source: string) => {
-        const result = unwrap(await ctx.remote.notebooks.runCell({
+        const result = unwrap(await notebooks.runCell({
           sessionId, notebookId, cellId, source,
         }))
         if (result.status === 'error') {
@@ -191,19 +196,19 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
       },
       restartNotebook: async (notebookId: NotebookId) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.restart({ sessionId, notebookId }),
+          await notebooks.restart({ sessionId, notebookId }),
         ).document)
       },
       reloadNotebook: async (notebookId: NotebookId) => {
         return notebookDocument(unwrap(
-          await ctx.remote.notebooks.reload({ sessionId, notebookId }),
+          await notebooks.reload({ sessionId, notebookId }),
         ).document)
       },
       interruptNotebook: async (notebookId: NotebookId) => {
-        unwrap(await ctx.remote.notebooks.interrupt({ sessionId, notebookId }))
+        unwrap(await notebooks.interrupt({ sessionId, notebookId }))
       },
       loadAttachment: async (attachment: ImageAttachmentRef) => {
-        const result = unwrap(await ctx.remote.notebooks.readAttachment({
+        const result = unwrap(await notebooks.readAttachment({
           sessionId,
           attachmentId: String(attachment.attachmentId),
         }))

@@ -52,6 +52,8 @@ export type NotebookKey =
   | 'environment.cancel'
   | 'environment.choose'
   | 'environment.attach'
+  | 'kernel.select'
+  | 'kernel.change'
   | 'environment.createBody'
   | 'environment.enableBody'
   | 'environment.create'
@@ -205,6 +207,8 @@ export const zh: Record<NotebookKey, string> = {
   'environment.cancel': '取消',
   'environment.choose': '选择环境',
   'environment.attach': '使用 {name}',
+  'kernel.select': '选择内核',
+  'kernel.change': '选择或更改内核',
   'environment.createBody': '在工作区创建标准 .venv，只安装锁定的 Jupyter 基础组件。',
   'environment.enableBody': '已存在未托管的 .venv。确认后只增补 Notebook 基础组件，不会清空环境。',
   'environment.create': '创建 .venv',
@@ -352,6 +356,8 @@ export const en: Record<NotebookKey, string> = {
   'environment.cancel': 'Cancel',
   'environment.choose': 'Choose an environment',
   'environment.attach': 'Use {name}',
+  'kernel.select': 'Select kernel',
+  'kernel.change': 'Select or change kernel',
   'environment.createBody': 'Create a standard workspace .venv with only the locked Jupyter basics.',
   'environment.enableBody': 'An unmanaged .venv exists. Confirm adding only Notebook basics; it will not be cleared.',
   'environment.create': 'Create .venv',
