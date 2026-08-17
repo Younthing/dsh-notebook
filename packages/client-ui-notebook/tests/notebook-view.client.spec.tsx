@@ -861,8 +861,12 @@ describe('NotebookView', () => {
 
   it('moves a cell down from the cell actions', async () => {
     const moveCell = vi.fn(async () => {})
-    render(<NotebookView {...viewProps({ moveCell })} />)
-    fireEvent.click(screen.getByRole('button', { name: '下移单元格' }))
+    render(<NotebookView {...viewProps({
+      snapshot: historySnapshot('ok', { additionalCode: ['second = 2'] }),
+      moveCell,
+    })} />)
+    const firstCell = screen.getByTestId('notebook-cell-notebook-1-cell-1')
+    fireEvent.click(within(firstCell).getByRole('button', { name: '下移单元格' }))
     await waitFor(() => {
       expect(moveCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'), 1)
     })
@@ -870,11 +874,15 @@ describe('NotebookView', () => {
 
   it('confirms before deleting a cell', async () => {
     const deleteCell = vi.fn(async () => {})
-    render(<NotebookView {...viewProps({ deleteCell })} />)
-    const removeButton = screen.getByRole('button', { name: '删除单元格' })
+    render(<NotebookView {...viewProps({
+      snapshot: historySnapshot('ok', { additionalCode: ['second = 2'] }),
+      deleteCell,
+    })} />)
+    const firstCell = screen.getByTestId('notebook-cell-notebook-1-cell-1')
+    const removeButton = within(firstCell).getByRole('button', { name: '删除单元格' })
     fireEvent.click(removeButton)
     expect(deleteCell).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: '再次点击确认删除' }))
+    fireEvent.click(within(firstCell).getByRole('button', { name: '再次点击确认删除' }))
     await waitFor(() => {
       expect(deleteCell).toHaveBeenCalledWith(NotebookId('notebook-1'), CellId('cell-1'))
     })
