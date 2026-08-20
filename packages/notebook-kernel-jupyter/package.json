@@ -21,7 +21,7 @@
   "scripts": { "bundle": "tsdown", "watch": "tsdown --watch" },
   "files": ["lib/index.js", "lib/invariant.js", "supervisor/dsh_notebook_supervisor.py", "lib/types/**/*.d.ts", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "license": "MIT",
-  "dependencies": { "@deepseek-ai/schemastery": "3.18.1-rc.4" },
+  "dependencies": { "@deepseek-ai/schemastery": "3.18.1" },
   "peerDependencies": {
     "@deepseek-ai/dsh-invariants": ">=0.1.0-rc.6 <0.2.0",
     "@younthing/dsh-notebook-core": "workspace:^",
