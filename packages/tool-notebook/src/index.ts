@@ -309,7 +309,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   ctx.systemPrompt.section({
     name: 'tool:notebook',
     order: 108,
-    text: 'Use notebook tools for workspace-backed notebook documents. Open an existing path or explicitly create an absent path, read it to discover cell ids, and insert or edit code, markdown, and raw cells while the document is detached. Execute code cells only when a user-selected environment is attached. If execution reports ENVIRONMENT_REQUIRED, tell the user to select an environment in the notebook UI; do not retry or install dependencies. Restart the kernel only when you intentionally need a fresh runtime state. After a write conflict, reload only when you intentionally accept the complete external file snapshot.',
+    text: 'Use notebook tools for workspace-backed notebook documents. Open an existing path or explicitly create an absent path, read it to discover cell ids, insert or edit code, markdown, and raw cells, and delete, move, or copy cells while the document is detached. Never modify an opened .ipynb through generic filesystem tools; use notebook tools so file-version guards remain coherent. Execute code cells only when a user-selected environment is attached. If execution reports ENVIRONMENT_REQUIRED, tell the user to select an environment in the notebook UI; do not retry or install dependencies. Restart the kernel only when you intentionally need a fresh runtime state. After a write conflict, reload only when you intentionally accept the complete external file snapshot.',
   })
 
   const genericPresentation = {
@@ -422,6 +422,71 @@ export function apply(ctx: Context, config: Config = {}): void {
         args.cellType,
         args.afterCellId === undefined ? undefined : cellId(args.afterCellId),
         args.source ?? '',
+        exec.signal,
+      )
+      return renderNotebookDocument(updated, maxResultBytes)
+    },
+    ...genericPresentation,
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'notebook_delete_cell',
+    description: 'Delete one notebook cell while retaining at least one cell.',
+    parameters: {
+      notebookId: { type: 'string', required: true },
+      cellId: { type: 'string', required: true },
+    },
+    output: passthroughTextOutput(),
+    async execute(args, exec) {
+      const target = requireNotebookTarget(exec, args.notebookId)
+      const updated = await ctx.notebooks.deleteCell(
+        target.agent.session,
+        target.notebookId,
+        cellId(args.cellId),
+        exec.signal,
+      )
+      return renderNotebookDocument(updated, maxResultBytes)
+    },
+    ...genericPresentation,
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'notebook_move_cell',
+    description: 'Move one notebook cell to an exact zero-based index.',
+    parameters: {
+      notebookId: { type: 'string', required: true },
+      cellId: { type: 'string', required: true },
+      toIndex: { type: 'integer', required: true },
+    },
+    output: passthroughTextOutput(),
+    async execute(args, exec) {
+      const target = requireNotebookTarget(exec, args.notebookId)
+      const updated = await ctx.notebooks.moveCell(
+        target.agent.session,
+        target.notebookId,
+        cellId(args.cellId),
+        args.toIndex,
+        exec.signal,
+      )
+      return renderNotebookDocument(updated, maxResultBytes)
+    },
+    ...genericPresentation,
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'notebook_copy_cell',
+    description: 'Copy one notebook cell immediately after the source cell.',
+    parameters: {
+      notebookId: { type: 'string', required: true },
+      cellId: { type: 'string', required: true },
+    },
+    output: passthroughTextOutput(),
+    async execute(args, exec) {
+      const target = requireNotebookTarget(exec, args.notebookId)
+      const updated = await ctx.notebooks.copyCell(
+        target.agent.session,
+        target.notebookId,
+        cellId(args.cellId),
         exec.signal,
       )
       return renderNotebookDocument(updated, maxResultBytes)

@@ -18,7 +18,7 @@ Install the one public bundle into the profile where Notebook should be enabled:
 dsh plugin --profile web add @younthing/dsh-notebook
 ```
 
-The bundle activates the Host service, uv environment provider, Jupyter kernel provider, browser Remote, Web companion panel, and all nine model tools. Installing it into another profile enables the same complete capability there, including `minimal`; installation is an explicit profile-level opt-in.
+The bundle activates the Host service, uv environment provider, Jupyter kernel provider, browser Remote, Web companion panel, and all twelve model tools. Installing it into another profile enables the same complete capability there, including `minimal`; installation is an explicit profile-level opt-in.
 
 Remove it with:
 
@@ -32,7 +32,7 @@ dsh plugin --profile web remove @younthing/dsh-notebook
 - Discovery, open, create, detached editing, insertion, reload, and multi-document state.
 - Private uv-managed Python environments and a Jupyter kernel backend.
 - Stream, error, JSON, HTML, Markdown, image attachment, and Plotly-capable MIME rendering.
-- Nine model tools: `notebook_open`, `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_insert_cell`, `notebook_execute`, `notebook_restart`, `notebook_reload`, and `notebook_inspect`.
+- Twelve model tools: `notebook_open`, `notebook_create`, `notebook_read`, `notebook_edit_cell`, `notebook_insert_cell`, `notebook_delete_cell`, `notebook_move_cell`, `notebook_copy_cell`, `notebook_execute`, `notebook_restart`, `notebook_reload`, and `notebook_inspect`.
 - A typed `ctx.remote.notebooks` Host/Web interface; a cold discovery or status read does not activate an Agent.
 
 The user installs one plugin package. The repository keeps eight publishable packages because the Service Definition, environment provider, kernel provider, Remote, tool consumer, and browser consumer have different runtime dependencies and release surfaces. `@younthing/dsh-notebook` is the only package users should add directly.
@@ -45,24 +45,97 @@ Environment setup is user-initiated in the Web UI. The provider downloads a chec
 
 ## Development
 
-Requirements: Node.js `^22.19.0 || >=24.0.0`, pnpm 11, and DeepSeek Harness rc.6 packages.
+### Requirements
+
+- Node.js `^22.19.0 || >=24.0.0`.
+- The repository-declared pnpm version (`11.7.0`).
+- An installed `dsh` CLI compatible with this plugin: `>=0.1.0-rc.6 <0.2.0`.
+
+The Notebook repository only requires `dsh` to be available on `PATH`; it does not require a DeepSeek Harness source checkout and does not inspect where DSH is installed. Verify the tools before setup:
+
+```sh
+node --version
+pnpm --version
+dsh --version
+```
+
+The supported DSH range follows the plugin packages' peer dependencies. Compatibility changes must update the peer ranges and pinned development dependencies together and be validated against an installed DSH release.
+
+### Initial setup
+
+Run every command in this section from the `dsh-notebook` repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm run typecheck
-pnpm run test
 pnpm run build
-pnpm run publint
-pnpm run pack:verify
+dsh plugin --profile web add ./packages/notebook
+dsh web --dump-config
 ```
 
-For linked local development, run `pnpm run dev`. It performs one complete
-build, then keeps the TypeScript declaration output and every Host/browser
-bundle current. A Harness profile with Host HMR enabled can reload Host plugin
-changes from these outputs, while the Web client HMR chain reloads the rebuilt
-Notebook browser bundle. When a DeepSeek Harness checkout is adjacent to this
-repository, `pnpm run dev:dsh` starts both watchers and `dsh web` as one process
-group.
+The plugin installation is an explicit, one-time profile operation. It records `@younthing/dsh-notebook` as a local link to the current checkout. `pnpm run dev` never installs plugins or modifies a profile. In the dumped configuration, verify a `# == @younthing/dsh-notebook` layer containing `notebook-core`, `notebook-environment-uv`, `notebook-kernel-jupyter`, `notebook-remote`, `tool-notebook`, and `ui-notebook`.
+
+The install and build steps are independent: `pnpm install --frozen-lockfile` and `pnpm run build` only access this repository, do not require the `dsh` CLI, and generate all publishable package artifacts, including `packages/client-ui-notebook/lib/client.cjs`.
+
+To verify install, configuration, and removal without touching the real profile, run `pnpm run test:dsh-profile`. This explicit integration check uses the installed `dsh` from `PATH` and creates a temporary `DSH_HOME` that it always removes afterward. It is intentionally not part of `pnpm run dev` or the DSH-independent `pnpm run check` gate.
+
+### Daily development
+
+Keep two independent terminals open.
+
+Terminal 1, from the Notebook repository root:
+
+```sh
+pnpm run dev
+```
+
+This performs one complete initial build, then runs the TypeScript, Host bundle, and Web client bundle watchers. It does not start DSH, inspect DSH installation paths or profiles, open a browser, watch a Web port, or send HMR messages. `Ctrl-C` stops all watchers; if one watcher fails, the development command fails as a group.
+
+Terminal 2:
+
+```sh
+dsh web
+```
+
+The installed DSH owns the `web` profile, loads the local package link, serves the client bundle, and broadcasts Client HMR updates. The two processes can fail and restart independently.
+
+### Reload behavior
+
+| Change | How it becomes active |
+| --- | --- |
+| Notebook React components, panel, cell actions, MIME renderers, locale, CSS, client store/service, or client remote adapter | Automatic Client HMR after `client.cjs` rebuilds |
+| Notebook Core, environment/kernel providers, Remote Host implementation, model tools, or other Node-side plugin code | Restart `dsh web`; keep `pnpm run dev` running |
+| `package.json` `dsh.client` manifest | Restart `dsh web` |
+| `cordis.patch.yml` plugin set | Restart DSH and verify the profile configuration again |
+| User profile configuration | Follow the installed DSH profile watch/reload behavior |
+
+Client HMR remounts the Notebook client plugin; it is not React Refresh, so temporary plugin-local React state can be lost. A failed remount does not automatically roll back to the previous bundle. Standard `dsh web` does not hot-replace Host plugins.
+
+### Unlink the local checkout
+
+```sh
+dsh plugin --profile web remove @younthing/dsh-notebook
+```
+
+To restore the registry version:
+
+```sh
+dsh plugin --profile web add @younthing/dsh-notebook
+```
+
+### Troubleshooting
+
+If Notebook is absent from the Web UI, run `dsh web --dump-config` and confirm the Notebook bundle layer and its six plugin entries are present.
+
+If client changes do not appear, confirm `packages/client-ui-notebook/lib/client.cjs` exists and is being rebuilt, then confirm `dsh web` is using the profile linked to this checkout.
+
+If Host changes do not appear, this is expected: stop and restart `dsh web` while leaving `pnpm run dev` running.
+
+If the profile still resolves the registry package, recreate the explicit local link:
+
+```sh
+dsh plugin --profile web remove @younthing/dsh-notebook
+dsh plugin --profile web add ./packages/notebook
+```
 
 Real Jupyter integration is opt-in and needs Python 3.12 plus Jupyter dependencies. Browser state restoration through Harness Session events is deferred until Harness publishes the required external-event API.
 

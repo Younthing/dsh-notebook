@@ -1,7 +1,6 @@
 /** Run the type and bundle watchers as one development process. */
 
 import { spawn, type ChildProcess } from 'node:child_process'
-import { resolve } from 'node:path'
 
 const pnpmCli = process.env.npm_execpath
 if (pnpmCli === undefined) {
@@ -44,10 +43,3 @@ process.once('SIGTERM', () => stop(143))
 
 start('watch:types', ['run', 'watch:types'])
 start('watch:bundles', ['run', 'watch:bundles'])
-
-const harnessFlag = process.argv.indexOf('--harness')
-if (harnessFlag !== -1) {
-  const harnessRoot = process.argv[harnessFlag + 1]
-  if (harnessRoot === undefined) throw new Error('--harness requires a checkout path')
-  start('dsh web', ['dsh', 'web'], resolve(harnessRoot))
-}

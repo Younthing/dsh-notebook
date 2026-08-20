@@ -85,12 +85,118 @@ async function setup() {
 }
 
 describe('tool-notebook unit surface', () => {
+  it('directs the model to use cell tools instead of generic file writes', async () => {
+    const { ctx } = await setup()
+    const assembly = await ctx.systemPrompt.assemble()
+    const notebookPrompt = assembly.sections.find(section => section.name === 'tool:notebook')
+    expect(notebookPrompt?.text).toContain('delete, move, or copy cells')
+    expect(notebookPrompt?.text).toContain('Never modify an opened .ipynb through generic filesystem tools')
+  })
+
+  it('copies a selected cell immediately after the source cell', async () => {
+    const { ctx, agent } = await setup()
+    const open = ctx.tools.get('notebook_open')
+    const insert = ctx.tools.get('notebook_insert_cell')
+    const copy = ctx.tools.get('notebook_copy_cell')
+    expect(open).toBeDefined()
+    expect(insert).toBeDefined()
+    expect(copy).toBeDefined()
+    if (open === undefined || insert === undefined || copy === undefined) {
+      throw new Error('notebook copy tool registration is incomplete')
+    }
+
+    const opened = await open.execute({ path: 'unit.ipynb' }, toolRunContext(agent)) as { notebookId: string }
+    await insert.execute({
+      notebookId: opened.notebookId,
+      cellType: 'code',
+      source: 'copy_me = 1',
+    }, toolRunContext(agent))
+
+    const result = await copy.execute({
+      notebookId: opened.notebookId,
+      cellId: 'cell-1',
+    }, toolRunContext(agent))
+    expect(result).toContain('#0 code id="cell-1"')
+    expect(result).toContain('#1 code id="cell-2"')
+    expect(result.match(/copy_me = 1/g)).toHaveLength(2)
+  })
+
+  it('moves a selected cell to an exact notebook index', async () => {
+    const { ctx, agent } = await setup()
+    const open = ctx.tools.get('notebook_open')
+    const insert = ctx.tools.get('notebook_insert_cell')
+    const move = ctx.tools.get('notebook_move_cell')
+    expect(open).toBeDefined()
+    expect(insert).toBeDefined()
+    expect(move).toBeDefined()
+    if (open === undefined || insert === undefined || move === undefined) {
+      throw new Error('notebook move tool registration is incomplete')
+    }
+
+    const opened = await open.execute({ path: 'unit.ipynb' }, toolRunContext(agent)) as { notebookId: string }
+    await insert.execute({
+      notebookId: opened.notebookId,
+      cellType: 'raw',
+      source: 'first',
+    }, toolRunContext(agent))
+    await insert.execute({
+      notebookId: opened.notebookId,
+      afterCellId: 'cell-1',
+      cellType: 'code',
+      source: 'second = True',
+    }, toolRunContext(agent))
+
+    const result = await move.execute({
+      notebookId: opened.notebookId,
+      cellId: 'cell-2',
+      toIndex: 0,
+    }, toolRunContext(agent))
+    expect(result.indexOf('#0 code id="cell-2"')).toBeLessThan(result.indexOf('#1 raw id="cell-1"'))
+  })
+
+  it('deletes a selected cell while retaining another cell', async () => {
+    const { ctx, agent } = await setup()
+    const open = ctx.tools.get('notebook_open')
+    const insert = ctx.tools.get('notebook_insert_cell')
+    const remove = ctx.tools.get('notebook_delete_cell')
+    expect(open).toBeDefined()
+    expect(insert).toBeDefined()
+    expect(remove).toBeDefined()
+    if (open === undefined || insert === undefined || remove === undefined) {
+      throw new Error('notebook delete tool registration is incomplete')
+    }
+
+    const opened = await open.execute({ path: 'unit.ipynb' }, toolRunContext(agent)) as { notebookId: string }
+    await insert.execute({
+      notebookId: opened.notebookId,
+      cellType: 'raw',
+      source: 'remove me',
+    }, toolRunContext(agent))
+    await insert.execute({
+      notebookId: opened.notebookId,
+      afterCellId: 'cell-1',
+      cellType: 'code',
+      source: 'keep_me = True',
+    }, toolRunContext(agent))
+
+    const result = await remove.execute({
+      notebookId: opened.notebookId,
+      cellId: 'cell-1',
+    }, toolRunContext(agent))
+    expect(result).not.toContain('remove me')
+    expect(result).toContain('#0 code id="cell-2"')
+    expect(result).toContain('keep_me = True')
+  })
+
   it('keeps detached documents editable, reports environment setup, then executes and restarts', async () => {
     const { ctx, agent, inject, root, toolsFiber } = await setup()
     const open = ctx.tools.get('notebook_open')
     const create = ctx.tools.get('notebook_create')
     const insert = ctx.tools.get('notebook_insert_cell')
     const edit = ctx.tools.get('notebook_edit_cell')
+    const remove = ctx.tools.get('notebook_delete_cell')
+    const move = ctx.tools.get('notebook_move_cell')
+    const copy = ctx.tools.get('notebook_copy_cell')
     const execute = ctx.tools.get('notebook_execute')
     const restart = ctx.tools.get('notebook_restart')
     const reload = ctx.tools.get('notebook_reload')
@@ -98,6 +204,9 @@ describe('tool-notebook unit surface', () => {
     expect(create).toBeDefined()
     expect(insert).toBeDefined()
     expect(edit).toBeDefined()
+    expect(remove).toBeDefined()
+    expect(move).toBeDefined()
+    expect(copy).toBeDefined()
     expect(execute).toBeDefined()
     expect(restart).toBeDefined()
     expect(reload).toBeDefined()
@@ -107,6 +216,9 @@ describe('tool-notebook unit surface', () => {
       || create === undefined
       || insert === undefined
       || edit === undefined
+      || remove === undefined
+      || move === undefined
+      || copy === undefined
       || execute === undefined
       || restart === undefined
       || reload === undefined
@@ -226,6 +338,9 @@ describe('tool-notebook unit surface', () => {
     await toolsFiber.dispose()
     expect(ctx.tools.get('notebook_open')).toBeUndefined()
     expect(ctx.tools.get('notebook_create')).toBeUndefined()
+    expect(ctx.tools.get('notebook_delete_cell')).toBeUndefined()
+    expect(ctx.tools.get('notebook_move_cell')).toBeUndefined()
+    expect(ctx.tools.get('notebook_copy_cell')).toBeUndefined()
     expect(ctx.tools.get('notebook_restart')).toBeUndefined()
     expect(ctx.tools.get('notebook_reload')).toBeUndefined()
   })

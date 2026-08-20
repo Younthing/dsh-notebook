@@ -11,7 +11,11 @@ interface Manifest {
   readonly license?: string
   readonly publishConfig?: { readonly access?: string }
   readonly repository?: { readonly url?: string; readonly directory?: string }
-  readonly dsh?: { readonly bundle?: { readonly patch?: string } }
+  readonly exports?: Readonly<Record<string, { readonly default?: string }>>
+  readonly dsh?: {
+    readonly bundle?: { readonly patch?: string }
+    readonly client?: { readonly platform?: string }
+  }
 }
 
 interface PackEntry {
@@ -51,6 +55,14 @@ for (const directory of packageDirectories) {
   } else if (manifest.dsh?.bundle !== undefined) {
     throw new Error(`${manifest.name}: only the user-facing package may declare a bundle`)
   }
+  if (manifest.name === '@younthing/dsh-client-ui-notebook') {
+    if (manifest.exports?.['./client']?.default !== './lib/client.cjs') {
+      throw new Error(`${manifest.name}: client export must point to ./lib/client.cjs`)
+    }
+    if (manifest.dsh?.client?.platform !== 'web') {
+      throw new Error(`${manifest.name}: dsh.client must declare the web platform`)
+    }
+  }
 
   const output = execFileSync('npm', ['pack', '--dry-run', '--json'], {
     cwd: root,
@@ -65,6 +77,9 @@ for (const directory of packageDirectories) {
   }
   if (manifest.name === '@younthing/dsh-notebook' && !files.has('cordis.patch.yml')) {
     throw new Error(`${manifest.name}: tarball omits cordis.patch.yml`)
+  }
+  if (manifest.name === '@younthing/dsh-client-ui-notebook' && !files.has('lib/client.cjs')) {
+    throw new Error(`${manifest.name}: tarball omits lib/client.cjs`)
   }
 }
 

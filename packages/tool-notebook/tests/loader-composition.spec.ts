@@ -126,12 +126,18 @@ describe('tool-notebook through a real Loader composition', () => {
     const createTool = context.tools.get('notebook_create')
     const insertTool = context.tools.get('notebook_insert_cell')
     const editTool = context.tools.get('notebook_edit_cell')
+    const deleteTool = context.tools.get('notebook_delete_cell')
+    const moveTool = context.tools.get('notebook_move_cell')
+    const copyTool = context.tools.get('notebook_copy_cell')
     const restartTool = context.tools.get('notebook_restart')
     const reloadTool = context.tools.get('notebook_reload')
     expect(openTool).toBeDefined()
     expect(createTool).toBeDefined()
     expect(insertTool).toBeDefined()
     expect(editTool).toBeDefined()
+    expect(deleteTool).toBeDefined()
+    expect(moveTool).toBeDefined()
+    expect(copyTool).toBeDefined()
     expect(restartTool).toBeDefined()
     expect(reloadTool).toBeDefined()
     if (
@@ -139,6 +145,9 @@ describe('tool-notebook through a real Loader composition', () => {
       || createTool === undefined
       || insertTool === undefined
       || editTool === undefined
+      || deleteTool === undefined
+      || moveTool === undefined
+      || copyTool === undefined
       || restartTool === undefined
       || reloadTool === undefined
     ) {

@@ -22,7 +22,7 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ['packages/*/tests/**/*.spec.ts', 'packages/*/tests/**/*.spec.tsx'],
+    include: ['packages/*/tests/**/*.spec.ts', 'packages/*/tests/**/*.spec.tsx', 'tests/**/*.spec.ts'],
     // The primitives bundle imports katex CSS; transform the chain so the
     // side-effect stylesheet import resolves instead of failing natively.
     css: true,
