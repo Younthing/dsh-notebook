@@ -22,7 +22,7 @@
   "files": ["lib/index.js", "lib/invariant.js", "requirements.lock", "lib/types/**/*.d.ts", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/schemastery": "3.18.1-rc.4",
+    "@deepseek-ai/schemastery": "3.18.1",
     "fflate": "^0.8.2"
   },
   "peerDependencies": {

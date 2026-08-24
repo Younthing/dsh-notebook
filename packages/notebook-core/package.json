@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@younthing/dsh-notebook-environment": "workspace:^",
-    "@deepseek-ai/schemastery": "3.18.1-rc.4"
+    "@deepseek-ai/schemastery": "3.18.1"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-agent": "0.1.0-rc.6",
