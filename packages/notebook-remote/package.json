@@ -57,7 +57,7 @@
     "@younthing/dsh-notebook-core": "workspace:^",
     "@younthing/dsh-notebook-environment": "workspace:^",
     "@deepseek-ai/schemastery": "3.18.1-rc.4",
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1-rc.4",
