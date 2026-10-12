@@ -36,7 +36,7 @@
   "license": "MIT",
   "dependencies": {
     "@younthing/dsh-notebook-remote": "workspace:^",
-    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-from-markdown": "^2.1.0",
     "mdast-util-gfm": "^3.1.0",
     "micromark-extension-gfm": "^3.0.0"
   },
